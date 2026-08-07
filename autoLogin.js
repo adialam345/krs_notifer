@@ -91,17 +91,6 @@ async function getOrInitPage(config) {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   );
 
-  // Blokir aset non-esensial (gambar, CSS, font, media) untuk menghemat RAM (~150ms check time)
-  await pageInstance.setRequestInterception(true);
-  pageInstance.on('request', (req) => {
-    const resourceType = req.resourceType();
-    if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
-      req.abort();
-    } else {
-      req.continue();
-    }
-  });
-
   return pageInstance;
 }
 
