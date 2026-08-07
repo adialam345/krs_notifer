@@ -115,12 +115,19 @@ export async function performAutoLogin() {
     let pinRequiredWithoutValue = false;
     if (page.url().includes('cek-pin-krs') || (await page.$('#mhsfix-pin_baru'))) {
       if (config.pinBank) {
-        console.log('[AUTO-LOGIN] Menemukan form PIN Bank, mengisi PIN Bank...');
-        await page.type('#mhsfix-pin_baru', config.pinBank);
-        await Promise.all([
-          page.click('button[type="submit"]'),
-          page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 35000 })
-        ]);
+        console.log(`[AUTO-LOGIN] Menemukan form PIN Bank, memasukkan PIN Bank (${config.pinBank})...`);
+        const pinInput = await page.waitForSelector('#mhsfix-pin_baru', { timeout: 10000 }).catch(() => null);
+        if (pinInput) {
+          await page.type('#mhsfix-pin_baru', config.pinBank);
+          await page.click('button[type="submit"]').catch(() => {});
+
+          for (let i = 0; i < 10; i++) {
+            await new Promise(r => setTimeout(r, 1000));
+            if (!page.url().includes('cek-pin-krs')) break;
+          }
+        } else {
+          console.log('⚠️ [AUTO-LOGIN] Elemen PIN Bank (#mhsfix-pin_baru) tidak ditemukan di DOM.');
+        }
       } else {
         console.log('ℹ️ [AUTO-LOGIN] Halaman memerlukan PIN Bank. Jika ada, isi "pinBank" di config.json.');
         pinRequiredWithoutValue = true;
