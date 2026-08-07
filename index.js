@@ -169,17 +169,40 @@ async function checkKrsStatus() {
         isAutoLoggingIn = false;
 
         if (loginResult.success) {
-          console.log(`[${timestamp}] 🎉 Auto-Login BERHASIL! Re-checking status KRS...`);
+          console.log(`[${timestamp}] 🎉 Auto-Login BERHASIL!`);
           isAutoLoginFailAlertSent = false;
 
           if (loginResult.pinRequiredWithoutValue && !isPinRequiredAlertSent) {
             await sendWaMessage(
-              `ℹ️ [PIN BANK REQUIRED]\n\nAuto-login berhasil, tetapi Siakad meminta PIN Bank!\nSilakan isi field 'pinBank' pada config.json agar auto-login dapat memasukkan PIN Bank secara otomatis.`
+              `ℹ️ [PIN BANK REQUIRED]\n\nAuto-login berhasil, tetapi Siakad meminta PIN Bank!\nSilakan isi field 'pinBank' pada config.json.`
             );
             isPinRequiredAlertSent = true;
           }
 
-          return checkKrsStatus(); // Langsung periksa ulang dengan cookie baru
+          // Langsung evaluasi status KRS dari HTML yang didapat saat auto-login
+          // (tidak re-check dengan cookies karena WAF F5 memblokir request baru)
+          if (loginResult.krsHtml) {
+            const lrHtml = loginResult.krsHtml;
+            const lrUrl = loginResult.krsUrl || '';
+            const isNotOpenLr = lrHtml.includes('Saat ini bukan jadwal input KRS') || lrHtml.includes('bukan-jadwal-krs.webp');
+            const isCekPinLr = lrUrl.includes('cek-pin') || lrHtml.includes('mhsfix-pin_baru');
+
+            if (isCekPinLr) {
+              console.log(`[${timestamp}] ⏳ Halaman PIN Bank (sudah login, menunggu PIN).`);
+            } else if (isNotOpenLr) {
+              console.log(`[${timestamp}] ⏳ KRS BELUM MULAI (Status: Bukan Jadwal Input KRS)`);
+            } else if (lrHtml.includes('Logout')) {
+              console.log(`[${timestamp}] 🎉 PERHATIAN: KRS SUDAH DIMULAI / ADA PERUBAHAN TAMPILAN!`);
+              process.stdout.write('\x07');
+              if (!isAlertSent) {
+                await sendWaMessage(
+                  `🚨 [ALERT KRS SIAKAD UNS]\n\n⚡ KRS SUDAH DIMULAI!\nWaktu: ${timestamp}\nLink: ${url}\n\nSegera login & ambil mata kuliah pilihanmu! 🎯`
+                );
+                isAlertSent = true;
+              }
+            }
+          }
+          return;
         } else {
           console.error(`[${timestamp}] ❌ Auto-Login GAGAL: ${loginResult.reason}`);
           const now = Date.now();

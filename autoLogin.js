@@ -185,6 +185,8 @@ export async function performAutoLogin() {
 
     // ═══ STEP 5: Handle PIN Bank ═══
     let pinRequiredWithoutValue = false;
+    let finalKrsHtml = krsHtml;
+    let finalKrsUrl = krsUrl;
 
     if (krsUrl.includes('cek-pin') || krsHtml.includes('mhsfix-pin_baru')) {
       if (pinBank) {
@@ -209,7 +211,7 @@ export async function performAutoLogin() {
         );
         collectCookies(cookieJar, pinRes);
 
-        // Re-akses input-krs setelah PIN Bank dikirim agar cookies final
+        // Re-akses input-krs setelah PIN Bank
         const krsRes2 = await axios.get('https://siakad.uns.ac.id/registrasi/input-krs/index', {
           headers: { 'User-Agent': UA, 'Cookie': buildCookieString(cookieJar) },
           maxRedirects: 5,
@@ -217,6 +219,8 @@ export async function performAutoLogin() {
           timeout: 20000
         });
         collectCookies(cookieJar, krsRes2);
+        finalKrsHtml = krsRes2.data || '';
+        finalKrsUrl = krsRes2.request?.res?.responseUrl || '';
 
         console.log('[AUTO-LOGIN] Step 5: ✅ PIN Bank dikirim.');
       } else {
@@ -237,7 +241,8 @@ export async function performAutoLogin() {
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
     console.log(`[AUTO-LOGIN] 💾 ${formattedCookies.length} cookies disimpan ke config.json!\n`);
 
-    return { success: true, pinRequiredWithoutValue };
+    // Return KRS page content langsung agar monitoring tidak perlu re-check
+    return { success: true, pinRequiredWithoutValue, krsHtml: finalKrsHtml, krsUrl: finalKrsUrl };
 
   } catch (err) {
     console.error(`❌ [AUTO-LOGIN] Error: ${err.message}`);
