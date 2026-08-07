@@ -112,8 +112,11 @@ export async function checkKrsWithPuppeteer(config) {
         console.log(`[AUTO-LOGIN] Mengisi kredensial SSO untuk akun: ${config.ssoUsername}`);
         await page.type('input[name="username"]', config.ssoUsername);
         await page.type('input[name="password"]', config.ssoPassword);
-        await page.click('button[type="submit"]').catch(() => {});
-        await new Promise(r => setTimeout(r, 4000));
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {}),
+          page.click('button[type="submit"]').catch(() => {})
+        ]);
+        await new Promise(r => setTimeout(r, 2000));
       }
     }
 
@@ -132,8 +135,11 @@ export async function checkKrsWithPuppeteer(config) {
       if (userInput) {
         await page.type('input[name="username"]', config.ssoUsername);
         await page.type('input[name="password"]', config.ssoPassword);
-        await page.click('button[type="submit"]').catch(() => {});
-        await new Promise(r => setTimeout(r, 4000));
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {}),
+          page.click('button[type="submit"]').catch(() => {})
+        ]);
+        await new Promise(r => setTimeout(r, 2000));
         await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 35000 });
         await new Promise(r => setTimeout(r, 1500));
         currentUrl = page.url();
@@ -147,8 +153,18 @@ export async function checkKrsWithPuppeteer(config) {
       const pinInput = await page.waitForSelector('#mhsfix-pin_baru', { timeout: 8000 }).catch(() => null);
       if (pinInput) {
         await page.type('#mhsfix-pin_baru', config.pinBank);
-        await page.click('button[type="submit"]').catch(() => {});
-        await new Promise(r => setTimeout(r, 3000));
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {}),
+          page.click('button[type="submit"]').catch(() => {})
+        ]);
+        await new Promise(r => setTimeout(r, 2000));
+
+        // Memastikan halaman akhir benar-benar berada di input-krs/index
+        if (!page.url().includes('input-krs/index')) {
+          await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 25000 });
+          await new Promise(r => setTimeout(r, 1500));
+        }
+
         currentUrl = page.url();
         html = await page.content();
       }
