@@ -11,40 +11,32 @@
   "cookies": [
     {
       "domain": "siakad.uns.ac.id",
-      "name": "TS03629b59029",
-      "value": "08c550b0e8ab2800450d614b9a048d7e201761ffc3735f7280752d9c1e58dee6edc92bc182c8e3b71ba02f39f65e088f",
+      "name": "TScd33794c027",
+      "value": "08c550b0e8ab2000bc784e66d77cdcd76cc037ad18bbbaa0980b4abbbbaddec45c375bed6bbb969408c6dc12401130004746b1288af693f3e34a3e2c3c86fce0cb1714dac9d34187b9632d989939500788a9c91872b53d4b19a8f14091509782",
       "path": "/",
       "secure": false,
       "httpOnly": false
-    },
-    {
-      "domain": "siakad.uns.ac.id",
-      "name": "TS017c575c",
-      "value": "01b52f714d04985d695153cd8f8603acb4f705fa7a6f095d007896c89f6858917fbb22058fe1529ba9820baffff3e3f2d88d48dbd62924cf16b82b247824f5aa14b8c06b72c87b8c7a9dcab450df878f92b3d304c53fe5412c74190c6caaa1d07d28c864cd",
-      "path": "/",
-      "secure": false,
-      "httpOnly": false
-    },
-    {
-      "domain": "siakad.uns.ac.id",
-      "name": "PHPSESSID",
-      "value": "309257a03a3f53b9b6015771faa87fc6",
-      "path": "/",
-      "secure": false,
-      "httpOnly": true
     },
     {
       "domain": "siakad.uns.ac.id",
       "name": "_csrf",
-      "value": "80172ebb989670d45dff284bc9629dca3774384629502ab387790e0a2d9cbe24a%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22RNCyuX1ocJu5nfeKWNNd8EH5QaS2utkK%22%3B%7D",
+      "value": "4374356e68f2a179dc408ef7852bc0128bc58fe07c5d793a0b7e9bb8069ab60ba%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22KVZ2bZdQL-wpmbXpwrK5cLsLs0COsBsG%22%3B%7D",
       "path": "/",
       "secure": false,
       "httpOnly": true
     },
     {
       "domain": "siakad.uns.ac.id",
-      "name": "TS00000000076",
-      "value": "08c550b0e8ab28005f088fa423d755c2569d37267a44f5b1d2802252da9d041e7d7dd518f7e35ce46c26d9a7a1b40e70086df8449e09d000af8338f8917f97b1f061f7de6b63528c5f9de236d008f5e29d5116a94a09f034eb6a9e853a0a1843729bab03ad76df13df759b4be24f96caa8d544382e5fd0a0566f5ad8e4ff452cf1fd7f80f1669fb5392eef933c20e4947de50d47c1fd224249d2740b8a282fa21fc367e598527168fc28baff7d8ee82fddc83e36d35b97b5c7790bef447c0e399ede6373f2282fc271844d0ed60f0597009cc1439ec763825e4b2bb3bcaefa24d6c951c79d2e7924c9efd758b9d78b4eb03d0b06067ae74236aa16b8cfdacc49c757382335e7540d",
+      "name": "PHPSESSID",
+      "value": "03eb6671b29766f34da6526ba7831091",
+      "path": "/",
+      "secure": false,
+      "httpOnly": true
+    },
+    {
+      "domain": "siakad.uns.ac.id",
+      "name": "TS017c575c",
+      "value": "01b52f714d5dddda6bcff2131d4a1ddec3d36d17483d45bc329be5b5992cba33f5322232eb52f8048deac4142968594df0448a2dae15dc6b5b4fca6a7e147bf400795454887a7bfe522addd6a5e7a46ec5c103fff0b6d368058fc4e2fc67c0c52b61d9522d",
       "path": "/",
       "secure": false,
       "httpOnly": false
@@ -52,15 +44,23 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "TSPD_101_DID",
-      "value": "08c550b0e8ab28005f088fa423d755c2569d37267a44f5b1d2802252da9d041e7d7dd518f7e35ce46c26d9a7a1b40e70086df8449e0638003467ca4a59ed511544e6272eb2681dc5459590eab9ea6b8d97f39365a7ce5067e859ccd5abc383b4cd34540287725e5d3766c96ba624db23",
+      "value": "08c550b0e8ab280066be4ea1be70ef6e96a0e717dfd61eca6c399baced491ee93cfc854da636eb6fabedd1136df36e6708b577290e063800830177c06f66ab4915e263f265970aaf8cc5e355c7665940da8704b6ece709a3f622155e08dbb6aaf275fd4646b50a4a0d0dd9529fa68588",
       "path": "/",
       "secure": false,
       "httpOnly": false
     },
     {
       "domain": "siakad.uns.ac.id",
-      "name": "TScd33794c027",
-      "value": "08c550b0e8ab2000fe3bff3a0b6b79ef18eb2482cc1727234b7dfea86cf41061d15f1ba5a8a543860811233ded113000e1ffd901a73995e3cee9091ab35dc87d8a49ea1211d79f40be4eb2187e165a6918c528759eda5df1f2bd1427bdc5a415",
+      "name": "TS03629b59029",
+      "value": "08c550b0e8ab2800475923197fc017ce07def0f07c20f85e4b640ef3f010506274b0753962a5eb858f727c577ae114e9",
+      "path": "/",
+      "secure": false,
+      "httpOnly": false
+    },
+    {
+      "domain": "siakad.uns.ac.id",
+      "name": "TS00000000076",
+      "value": "08c550b0e8ab280066be4ea1be70ef6e96a0e717dfd61eca6c399baced491ee93cfc854da636eb6fabedd1136df36e6708b577290e09d0006c1df4db968003094024756c56be4a689696429acabc5052db2521e7706960d85bb92040d916dfcbabe43a17459f67cf09e0c6bed4a9283927b5a635c04ec9755bcb6c4c78be6a9843bf032a52a2a335d5ddc664b02ebdd6aac913c9cfe1ce3257146a4a7e0d6e60da3a99e6038bc8114fce3d5e0bb7ff5cdec3424bb5cbd8add1dcc930f453adee8b8d88e0f91257913e14f95e0507bbe9b32079f3122cfe89d7b4e2defc0cb2acc851bbef3c7f5d31972321c1f9f2257326b571b232d91ebbd3e1f669c04b95b9dcb3f8b344937fb4",
       "path": "/",
       "secure": false,
       "httpOnly": false
