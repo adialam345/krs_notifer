@@ -195,8 +195,15 @@ export async function checkKrsWithPuppeteer(config) {
     const isCekPin = currentUrl.includes('cek-pin') || lowerHtml.includes('mhsfix-pin_baru');
     const isLoginPage = currentUrl.includes('sso.uns.ac.id') || currentUrl.includes('saml/login') || !hasLogout;
 
-    // KRS Benar-Benar Terbuka jika: Logged in, bukan jadwal tidak ada, bukan cek pin, bukan login page, & halaman utuh (>10KB)
-    const isKrsOpen = hasLogout && !isNotOpen && !isCekPin && !isLoginPage && html.length > 10000;
+    // Kata kunci spesifik saat pengisian KRS resmi dibuka
+    const hasKrsOpenKeywords = lowerHtml.includes('klik untuk pilih mata kuliah') ||
+                              lowerHtml.includes('tambahkan krs') ||
+                              lowerHtml.includes('pembimbing') ||
+                              lowerHtml.includes('pilih mata kuliah') ||
+                              lowerHtml.includes('tambah krs');
+
+    // KRS Terbuka jika: Logged in, bukan halaman login/pin, serta (mengandung kata kunci KRS buka ATAU tidak ada penanda 'bukan jadwal')
+    const isKrsOpen = hasLogout && !isCekPin && !isLoginPage && html.length > 10000 && (hasKrsOpenKeywords || !isNotOpen);
 
     return {
       success: true,
@@ -205,6 +212,7 @@ export async function checkKrsWithPuppeteer(config) {
       hasLogout,
       isNotOpen,
       isCekPin,
+      hasKrsOpenKeywords,
       isKrsOpen
     };
 
