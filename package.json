@@ -1,0 +1,17 @@
+{
+  "name": "krs-notifier-baileys",
+  "version": "1.0.0",
+  "description": "SIAKAD UNS KRS Notifier with Baileys WhatsApp Gateway",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.13",
+    "axios": "^1.7.9",
+    "pino": "^9.6.0",
+    "puppeteer-core": "^25.5.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
