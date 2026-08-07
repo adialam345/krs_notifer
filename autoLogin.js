@@ -204,12 +204,13 @@ export async function checkKrsWithPuppeteer(config) {
                               lowerHtml.includes('pengambilan krs') ||
                               lowerHtml.includes('batal krs');
 
-    // KRS Terbuka HANYA JIKA: Logged in, bukan halaman login/pin, berada di input-krs, & mengandung kata kunci KRS buka secara eksplisit
+    // KRS Terbuka HANYA JIKA: Logged in, bukan halaman login/pin, di input-krs, TIDAK ada teks 'bukan jadwal', DAN WAJIB mengandung kata kunci KRS buka
     const isKrsOpen = hasLogout && 
                       !isCekPin && 
                       !isLoginPage && 
                       currentUrl.includes('input-krs') && 
-                      (hasKrsOpenKeywords || (!isNotOpen && (lowerHtml.includes('tabel') || lowerHtml.includes('table'))));
+                      !isNotOpen && 
+                      hasKrsOpenKeywords;
 
     return {
       success: true,
