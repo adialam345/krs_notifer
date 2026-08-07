@@ -91,7 +91,7 @@ async function getOrInitPage(config) {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   );
 
-  // Blokir aset non-esensial (gambar, CSS, font, media) untuk menghemat memori & mempercepat akses (~150ms)
+  // Blokir aset non-esensial (gambar, CSS, font, media) untuk menghemat RAM (~150ms check time)
   await pageInstance.setRequestInterception(true);
   pageInstance.on('request', (req) => {
     const resourceType = req.resourceType();
@@ -107,7 +107,7 @@ async function getOrInitPage(config) {
 
 /**
  * Melakukan pemeriksaan halaman KRS Siakad UNS menggunakan Chromium ultra-ringan.
- * Otomatis menangani SSO Login & PIN Bank secara efisien tanpa false alert.
+ * Otomatis menangani SSO Login & PIN Bank secara efisien tanpa false alert & tanpa loop PIN.
  */
 export async function checkKrsWithPuppeteer(config) {
   if (isCheckRunning) {
@@ -128,24 +128,21 @@ export async function checkKrsWithPuppeteer(config) {
 
     if (needsSso) {
       console.log('[AUTO-LOGIN] Membuka halaman login SSO UNS...');
-      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 20000 });
+      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
 
       const userInput = await page.waitForSelector('input[name="username"]', { timeout: 8000 }).catch(() => null);
       if (userInput) {
         console.log(`[AUTO-LOGIN] Mengisi kredensial SSO untuk akun: ${config.ssoUsername}`);
         await page.type('input[name="username"]', config.ssoUsername);
         await page.type('input[name="password"]', config.ssoPassword);
-        await Promise.all([
-          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {}),
-          page.click('button[type="submit"]').catch(() => {})
-        ]);
-        await new Promise(r => setTimeout(r, 1500));
+        await page.click('button[type="submit"]').catch(() => {});
+        await new Promise(r => setTimeout(r, 4000));
       }
     }
 
     // 2. Navigasi ke Halaman Input KRS
-    await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 });
-    await new Promise(r => setTimeout(r, 1000));
+    await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
+    await new Promise(r => setTimeout(r, 1500));
 
     currentUrl = page.url();
     let html = await page.content();
@@ -153,18 +150,15 @@ export async function checkKrsWithPuppeteer(config) {
     // Jika setelah navigasi krs malah terlempar ke SSO lagi, lakukan re-login sekali lagi
     if (currentUrl.includes('sso.uns.ac.id') || currentUrl.includes('saml/login')) {
       console.log('[AUTO-LOGIN] Sesi expired, melakukan login SSO ulang...');
-      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 20000 });
+      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
       const userInput = await page.waitForSelector('input[name="username"]', { timeout: 8000 }).catch(() => null);
       if (userInput) {
         await page.type('input[name="username"]', config.ssoUsername);
         await page.type('input[name="password"]', config.ssoPassword);
-        await Promise.all([
-          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {}),
-          page.click('button[type="submit"]').catch(() => {})
-        ]);
+        await page.click('button[type="submit"]').catch(() => {});
+        await new Promise(r => setTimeout(r, 4000));
+        await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
         await new Promise(r => setTimeout(r, 1500));
-        await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 });
-        await new Promise(r => setTimeout(r, 1000));
         currentUrl = page.url();
         html = await page.content();
       }
@@ -173,19 +167,15 @@ export async function checkKrsWithPuppeteer(config) {
     // 3. Cek & Handle Form PIN Bank
     if ((currentUrl.includes('cek-pin') || html.includes('mhsfix-pin_baru')) && config.pinBank) {
       console.log(`[AUTO-LOGIN] Memasukkan PIN Bank (${config.pinBank})...`);
-      const pinInput = await page.waitForSelector('#mhsfix-pin_baru', { timeout: 5000 }).catch(() => null);
+      const pinInput = await page.waitForSelector('#mhsfix-pin_baru', { timeout: 8000 }).catch(() => null);
       if (pinInput) {
-        await page.type('#mhsfix-pin_baru', config.pinBank);
-        await Promise.all([
-          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {}),
-          page.click('button[type="submit"]').catch(() => {})
-        ]);
-        await new Promise(r => setTimeout(r, 2000));
+        await pinInput.type(config.pinBank);
+        await page.click('button[type="submit"]').catch(() => {});
+        await new Promise(r => setTimeout(r, 4000));
 
-        // Pastikan navigasi ke input-krs/index telah selesai penuh
         if (!page.url().includes('input-krs/index')) {
-          await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 });
-          await new Promise(r => setTimeout(r, 1000));
+          await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
+          await new Promise(r => setTimeout(r, 1500));
         }
 
         currentUrl = page.url();
