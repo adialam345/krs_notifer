@@ -139,11 +139,25 @@ async function checkKrsStatus() {
       return;
     }
 
-    // 2. Cek Cookie / Session Expired / Form PIN Bank Prompt
-    const isLoginPage = finalUrl.toLowerCase().includes('login') ||
-                        finalUrl.toLowerCase().includes('cek-pin') ||
-                        html.includes('mhsfix-pin_baru') ||
-                        !html.includes('Logout');
+    // 2. Cek Cookie / Session Expired
+    const isCekPin = finalUrl.toLowerCase().includes('cek-pin') || html.includes('mhsfix-pin_baru');
+    const isLoginPage = (finalUrl.toLowerCase().includes('login') || !html.includes('Logout')) && !isCekPin;
+
+    if (isCekPin) {
+      // Halaman cek-pin = sudah login tapi belum melewati PIN Bank.
+      // Bukan expired, tapi KRS belum bisa diakses. Treat sebagai "belum mulai".
+      console.log(`[${timestamp}] ⏳ Halaman PIN Bank (sudah login, menunggu PIN). Status: Belum bisa akses KRS.`);
+      isAlertSent = false;
+
+      const now = Date.now();
+      if (now - lastHourlyStatusWaSentTime >= HOURLY_STATUS_INTERVAL_MS) {
+        lastHourlyStatusWaSentTime = now;
+        await sendWaMessage(
+          `ℹ️ [STATUS UPDATE]\n\nWaktu: ${timestamp}\nStatus: Sudah login, halaman PIN Bank aktif.\nBot tetap memantau setiap ${config.checkIntervalSeconds || 10} detik.`
+        );
+      }
+      return;
+    }
 
     if (isLoginPage) {
       console.log(`[${timestamp}] ⚠️ WARNING: Cookie/Session Siakad EXPIRED (di-redirect ke login)!`);

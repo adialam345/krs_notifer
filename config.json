@@ -12,23 +12,47 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "TScd33794c027",
-      "value": "08c550b0e8ab2000bc784e66d77cdcd76cc037ad18bbbaa0980b4abbbbaddec45c375bed6bbb969408c6dc12401130004746b1288af693f3e34a3e2c3c86fce0cb1714dac9d34187b9632d989939500788a9c91872b53d4b19a8f14091509782",
+      "value": "08c550b0e8ab2000fff1fd273cb1b3256b9cbdf2e27854b7886dc547047ff7b6bb6267e68897bee0084e7637541130000b8969ef2e81c310d97a1589699c62edf1b5cd25012a104e2efe86b36b615649b3d109dbfbf229b0d232a5291df623b2",
       "path": "/",
       "secure": false,
       "httpOnly": false
     },
     {
+      "domain": "sso.uns.ac.id",
+      "name": "SimpleSAMLSessionID",
+      "value": "cd5eccf7365bc2ab9f39927c4b99bf4f",
+      "path": "/",
+      "secure": true,
+      "httpOnly": true
+    },
+    {
+      "domain": "sso.uns.ac.id",
+      "name": "SimpleSAMLAuthToken",
+      "value": "_1d93f1706728cd247356752b62fbca5bddb3171d23",
+      "path": "/",
+      "secure": true,
+      "httpOnly": true
+    },
+    {
       "domain": "siakad.uns.ac.id",
-      "name": "_csrf",
-      "value": "4374356e68f2a179dc408ef7852bc0128bc58fe07c5d793a0b7e9bb8069ab60ba%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22KVZ2bZdQL-wpmbXpwrK5cLsLs0COsBsG%22%3B%7D",
+      "name": "PHPSESSID",
+      "value": "c6dc47d0326e6b645278c88dc37d44cf",
       "path": "/",
       "secure": false,
       "httpOnly": true
     },
     {
       "domain": "siakad.uns.ac.id",
-      "name": "PHPSESSID",
-      "value": "03eb6671b29766f34da6526ba7831091",
+      "name": "_identity",
+      "value": "deleted",
+      "path": "/",
+      "secure": false,
+      "httpOnly": true
+    },
+    {
+      "domain": "siakad.uns.ac.id",
+      "name": "_csrf",
+      "value": "9d863e865e60cdcca31abb8035e6b4bfe5f362f92ccbbe21963234804c83fdada%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22T0Rgj98Z6azqQg3C1TvLMdHfKhHoUuB-%22%3B%7D",
       "path": "/",
       "secure": false,
       "httpOnly": true
@@ -36,15 +60,7 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "TS017c575c",
-      "value": "01b52f714d5dddda6bcff2131d4a1ddec3d36d17483d45bc329be5b5992cba33f5322232eb52f8048deac4142968594df0448a2dae15dc6b5b4fca6a7e147bf400795454887a7bfe522addd6a5e7a46ec5c103fff0b6d368058fc4e2fc67c0c52b61d9522d",
-      "path": "/",
-      "secure": false,
-      "httpOnly": false
-    },
-    {
-      "domain": "siakad.uns.ac.id",
-      "name": "TSPD_101_DID",
-      "value": "08c550b0e8ab280066be4ea1be70ef6e96a0e717dfd61eca6c399baced491ee93cfc854da636eb6fabedd1136df36e6708b577290e063800830177c06f66ab4915e263f265970aaf8cc5e355c7665940da8704b6ece709a3f622155e08dbb6aaf275fd4646b50a4a0d0dd9529fa68588",
+      "value": "01b52f714d1c11d79b769d22dcd911021830a006ef0937c0adf227fd257912566a0f7b36e6ee263d72c98a4701d5d9e7a88d9675d822d231959cb09af6687b3a443491c3e79ad05bb1776a5ca2ed1323bed8f69427a6339183877a0da47ba014e5bcbe98e0",
       "path": "/",
       "secure": false,
       "httpOnly": false
@@ -52,15 +68,7 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "TS03629b59029",
-      "value": "08c550b0e8ab2800475923197fc017ce07def0f07c20f85e4b640ef3f010506274b0753962a5eb858f727c577ae114e9",
-      "path": "/",
-      "secure": false,
-      "httpOnly": false
-    },
-    {
-      "domain": "siakad.uns.ac.id",
-      "name": "TS00000000076",
-      "value": "08c550b0e8ab280066be4ea1be70ef6e96a0e717dfd61eca6c399baced491ee93cfc854da636eb6fabedd1136df36e6708b577290e09d0006c1df4db968003094024756c56be4a689696429acabc5052db2521e7706960d85bb92040d916dfcbabe43a17459f67cf09e0c6bed4a9283927b5a635c04ec9755bcb6c4c78be6a9843bf032a52a2a335d5ddc664b02ebdd6aac913c9cfe1ce3257146a4a7e0d6e60da3a99e6038bc8114fce3d5e0bb7ff5cdec3424bb5cbd8add1dcc930f453adee8b8d88e0f91257913e14f95e0507bbe9b32079f3122cfe89d7b4e2defc0cb2acc851bbef3c7f5d31972321c1f9f2257326b571b232d91ebbd3e1f669c04b95b9dcb3f8b344937fb4",
+      "value": "08c550b0e8ab28004935f2b9309e271e36b81edc0daaff71c11b7094e679595825f3854bbaa129682cf0a26cd9b8b797",
       "path": "/",
       "secure": false,
       "httpOnly": false

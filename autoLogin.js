@@ -1,207 +1,286 @@
-import puppeteer from 'puppeteer-core';
+import axios from 'axios';
 import fs from 'fs';
-import os from 'os';
 
 const CONFIG_FILE = './config.json';
-
-function findChromeExecutable() {
-  const platform = os.platform();
-
-  if (platform === 'win32') {
-    const possiblePaths = [
-      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-      `${process.env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe`,
-      'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-      'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'
-    ];
-    for (const p of possiblePaths) {
-      if (p && fs.existsSync(p)) return p;
-    }
-  } else if (platform === 'linux') {
-    const possiblePaths = [
-      '/usr/bin/chromium',
-      '/usr/bin/chromium-browser',
-      '/usr/bin/google-chrome',
-      '/usr/bin/google-chrome-stable'
-    ];
-    for (const p of possiblePaths) {
-      if (fs.existsSync(p)) return p;
-    }
-  }
-  return null;
-}
-
 let isAutoLoginRunning = false;
 
+/**
+ * Auto-login ke SSO UNS via HTTP murni (tanpa browser/Puppeteer).
+ * Flow SAML: Siakad → SSO Form → POST Credentials → SAMLResponse → Siakad ACS → Cookies!
+ */
 export async function performAutoLogin() {
-  // ═══ MUTEX LOCK: Hanya 1 instance auto-login yang boleh berjalan ═══
   if (isAutoLoginRunning) {
-    console.log('[AUTO-LOGIN] ⏳ Sedang berjalan di proses lain, skip.');
+    console.log('[AUTO-LOGIN] ⏳ Sedang berjalan, skip.');
     return { success: false, reason: 'Auto-login sedang berjalan' };
   }
 
   isAutoLoginRunning = true;
-  console.log('\n[🔄 AUTO-LOGIN] Memulai proses login otomatis ke SSO UNS...');
+  console.log('\n[🔄 AUTO-LOGIN] Memulai login SSO UNS via HTTP...');
 
-  if (!fs.existsSync(CONFIG_FILE)) {
-    isAutoLoginRunning = false;
-    return { success: false, reason: 'File config.json tidak ditemukan' };
-  }
-
-  const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
-  const { ssoUsername: username, ssoPassword: password } = config;
-
-  if (!username || !password || username.includes('EMAIL_UNS_ANDA')) {
-    isAutoLoginRunning = false;
-    return { success: false, reason: 'Kredensial SSO belum diisi di config.json' };
-  }
-
-  const executablePath = config.executablePath || findChromeExecutable();
-  if (!executablePath) {
-    isAutoLoginRunning = false;
-    return { success: false, reason: 'Browser (Chrome/Chromium) tidak ditemukan!' };
-  }
-
-  console.log(`[AUTO-LOGIN] Browser: ${executablePath}`);
-
-  let browser;
   try {
-    browser = await puppeteer.launch({
-      executablePath,
-      headless: true,
-      pipe: true,
-      args: [
-        '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas', '--no-first-run', '--no-zygote',
-        '--disable-gpu', '--disable-extensions', '--single-process'
-      ]
-    });
-
-    // ═══ STEP 1: Login SSO UNS ═══
-    const loginPage = await browser.newPage();
-    await loginPage.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    );
-
-    console.log('[AUTO-LOGIN] Membuka halaman SSO UNS...');
-    await loginPage.goto('https://siakad.uns.ac.id/saml/login', {
-      waitUntil: 'domcontentloaded', timeout: 40000
-    });
-
-    await loginPage.waitForSelector('input[name="username"]', { timeout: 15000 });
-    console.log(`[AUTO-LOGIN] Mengisi kredensial: ${username}`);
-    await loginPage.type('input[name="username"]', username);
-    await loginPage.type('input[name="password"]', password);
-
-    console.log('[AUTO-LOGIN] Menekan tombol Masuk...');
-    await loginPage.click('button[type="submit"]').catch(() => {});
-
-    // Polling: tunggu redirect SSO → Siakad selesai (maks 20 detik)
-    let ssoSuccess = false;
-    for (let i = 0; i < 20; i++) {
-      await new Promise(r => setTimeout(r, 1000));
-      try {
-        const url = loginPage.url();
-        if (url.includes('siakad.uns.ac.id') && !url.includes('saml/login')) {
-          ssoSuccess = true;
-          break;
-        }
-      } catch {
-        // Context mungkin sudah destroyed karena redirect - cek via browser target
-        const pages = await browser.pages();
-        for (const p of pages) {
-          try {
-            const u = p.url();
-            if (u.includes('siakad.uns.ac.id') && !u.includes('saml/login')) {
-              ssoSuccess = true;
-              break;
-            }
-          } catch { /* skip */ }
-        }
-        if (ssoSuccess) break;
-      }
+    if (!fs.existsSync(CONFIG_FILE)) {
+      return { success: false, reason: 'config.json tidak ditemukan' };
     }
 
-    if (!ssoSuccess) {
-      // Cek apakah masih di SSO (password salah / captcha)
-      let failReason = 'Timeout: Redirect SSO ke Siakad tidak berhasil.';
-      try {
-        const content = await loginPage.content();
-        if (content.includes('Captcha') || content.includes('captcha')) {
-          failReason = 'SSO UNS meminta Captcha.';
-        } else if (loginPage.url().includes('sso.uns.ac.id')) {
-          failReason = 'Username atau Password SSO salah!';
-        }
-      } catch { /* page mungkin sudah destroyed */ }
-      console.error(`❌ [AUTO-LOGIN] ${failReason}`);
-      await browser.close();
-      return { success: false, reason: failReason };
+    const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+    const { ssoUsername: username, ssoPassword: password, pinBank } = config;
+
+    if (!username || !password || username.includes('EMAIL_UNS_ANDA')) {
+      return { success: false, reason: 'Kredensial SSO belum diisi di config.json' };
     }
 
-    console.log('[AUTO-LOGIN] ✅ SSO Login berhasil! Redirect ke Siakad selesai.');
+    const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    const cookieJar = {};
 
-    // ═══ STEP 2: Buka TAB BARU untuk navigasi ke Input KRS ═══
-    // Ini menghindari "Execution context was destroyed" karena tab lama
-    // mungkin masih punya pending redirect/navigation dari SSO.
-    await new Promise(r => setTimeout(r, 2000)); // Tunggu sesi server stabil
+    // ═══ STEP 1: GET /saml/login → redirect ke SSO IdP (manual redirect) ═══
+    console.log('[AUTO-LOGIN] Step 1: Memulai SAML redirect chain...');
 
-    const krsPage = await browser.newPage();
-    await krsPage.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    );
-
-    console.log('[AUTO-LOGIN] Membuka halaman Input KRS di tab baru...');
-    await krsPage.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', {
-      waitUntil: 'domcontentloaded', timeout: 40000
+    const step1 = await axios.get('https://siakad.uns.ac.id/saml/login', {
+      headers: { 'User-Agent': UA },
+      maxRedirects: 0,
+      validateStatus: () => true,
+      timeout: 20000
     });
+    collectCookies(cookieJar, step1);
 
-    // ═══ STEP 3: Handle PIN Bank jika diperlukan ═══
+    // Follow redirect ke SSO IdP
+    const idpUrl = step1.headers.location;
+    if (!idpUrl) {
+      return { success: false, reason: 'Tidak ada redirect dari /saml/login' };
+    }
+
+    const step2 = await axios.get(idpUrl, {
+      headers: { 'User-Agent': UA, 'Cookie': buildCookieString(cookieJar) },
+      maxRedirects: 0,
+      validateStatus: () => true,
+      timeout: 20000
+    });
+    collectCookies(cookieJar, step2);
+
+    // Follow redirect ke login form page
+    const loginFormUrl = step2.headers.location;
+    if (!loginFormUrl) {
+      return { success: false, reason: 'Tidak ada redirect ke form login SSO' };
+    }
+
+    const resolvedLoginUrl = new URL(loginFormUrl, idpUrl).toString();
+    const step3 = await axios.get(resolvedLoginUrl, {
+      headers: { 'User-Agent': UA, 'Cookie': buildCookieString(cookieJar) },
+      maxRedirects: 0,
+      validateStatus: () => true,
+      timeout: 20000
+    });
+    collectCookies(cookieJar, step3);
+
+    // Parse AuthState dari form
+    const authStateMatch = step3.data.match(/name="AuthState"\s+value="([^"]+)"/);
+    if (!authStateMatch) {
+      return { success: false, reason: 'Gagal menemukan AuthState di form SSO.' };
+    }
+    const authState = decodeHtmlEntities(authStateMatch[1]);
+    console.log('[AUTO-LOGIN] Step 1: ✅ Form SSO ditemukan.');
+
+    // ═══ STEP 2: POST credentials ke SSO ═══
+    console.log(`[AUTO-LOGIN] Step 2: Login sebagai ${username}...`);
+
+    const postUrl = resolvedLoginUrl.split('?')[0];
+    const step4 = await axios.post(postUrl, new URLSearchParams({
+      username,
+      password,
+      AuthState: authState
+    }).toString(), {
+      headers: {
+        'User-Agent': UA,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': buildCookieString(cookieJar),
+        'Referer': resolvedLoginUrl
+      },
+      maxRedirects: 0,
+      validateStatus: () => true,
+      timeout: 20000
+    });
+    collectCookies(cookieJar, step4);
+
+    let samlHtml = step4.data;
+
+    // Cek login gagal (masih di form login)
+    if (step4.status === 200 && samlHtml.includes('name="username"') && !samlHtml.includes('SAMLResponse')) {
+      return { success: false, reason: 'Username atau Password SSO salah!' };
+    }
+
+    // Ikuti redirect jika status 302
+    if (step4.status >= 300 && step4.status < 400 && step4.headers.location) {
+      const redirectUrl = new URL(step4.headers.location, postUrl).toString();
+      const step4b = await axios.get(redirectUrl, {
+        headers: { 'User-Agent': UA, 'Cookie': buildCookieString(cookieJar) },
+        maxRedirects: 5,
+        validateStatus: () => true,
+        timeout: 20000
+      });
+      collectCookies(cookieJar, step4b);
+      samlHtml = step4b.data;
+    }
+
+    console.log('[AUTO-LOGIN] Step 2: ✅ Credentials diterima.');
+
+    // ═══ STEP 3: Parse SAMLResponse & POST ke Siakad ACS ═══
+    console.log('[AUTO-LOGIN] Step 3: Memproses SAML response...');
+
+    const samlResponseMatch = samlHtml.match(/name="SAMLResponse"\s+value="([^"]+)"/);
+    const relayStateMatch = samlHtml.match(/name="RelayState"\s+value="([^"]+)"/);
+    const actionMatch = samlHtml.match(/action="([^"]+)"/);
+
+    if (!samlResponseMatch || !actionMatch) {
+      return { success: false, reason: 'Gagal parse SAMLResponse.' };
+    }
+
+    const samlResponse = samlResponseMatch[1];
+    const relayState = relayStateMatch ? decodeHtmlEntities(relayStateMatch[1]) : '';
+    const acsUrl = decodeHtmlEntities(actionMatch[1]);
+
+    const postData = new URLSearchParams({ SAMLResponse: samlResponse });
+    if (relayState) postData.append('RelayState', relayState);
+
+    const step5 = await axios.post(acsUrl, postData.toString(), {
+      headers: {
+        'User-Agent': UA,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': buildCookieString(cookieJar)
+      },
+      maxRedirects: 0,
+      validateStatus: () => true,
+      timeout: 20000
+    });
+    collectCookies(cookieJar, step5);
+
+    // Follow redirect chain dari ACS
+    let loc = step5.headers.location || '';
+    for (let i = 0; i < 5 && loc; i++) {
+      const resolved = new URL(loc, acsUrl).toString();
+      const r = await axios.get(resolved, {
+        headers: { 'User-Agent': UA, 'Cookie': buildCookieString(cookieJar) },
+        maxRedirects: 0,
+        validateStatus: () => true,
+        timeout: 20000
+      });
+      collectCookies(cookieJar, r);
+      loc = r.headers.location || '';
+    }
+
+    console.log('[AUTO-LOGIN] Step 3: ✅ SAML berhasil diproses, cookies Siakad didapatkan!');
+
+    // ═══ STEP 4: Akses halaman Input KRS ═══
+    console.log('[AUTO-LOGIN] Step 4: Mengakses halaman Input KRS...');
+
+    const krsRes = await axios.get('https://siakad.uns.ac.id/registrasi/input-krs/index', {
+      headers: { 'User-Agent': UA, 'Cookie': buildCookieString(cookieJar) },
+      maxRedirects: 5,
+      validateStatus: () => true,
+      timeout: 20000
+    });
+    collectCookies(cookieJar, krsRes);
+
+    const krsUrl = krsRes.request?.res?.responseUrl || '';
+    const krsHtml = krsRes.data || '';
+
+    // ═══ STEP 5: Handle PIN Bank ═══
     let pinRequiredWithoutValue = false;
-    const krsUrl = krsPage.url();
 
-    if (krsUrl.includes('cek-pin-krs') || krsUrl.includes('cek-pin')) {
-      if (config.pinBank) {
-        console.log(`[AUTO-LOGIN] Form PIN Bank terdeteksi, mengisi PIN (${config.pinBank})...`);
-        const pinInput = await krsPage.waitForSelector('#mhsfix-pin_baru', { timeout: 10000 }).catch(() => null);
-        if (pinInput) {
-          await krsPage.type('#mhsfix-pin_baru', config.pinBank);
-          await krsPage.click('button[type="submit"]').catch(() => {});
-          // Tunggu halaman berpindah dari cek-pin
-          for (let i = 0; i < 10; i++) {
-            await new Promise(r => setTimeout(r, 1000));
-            if (!krsPage.url().includes('cek-pin')) break;
+    if (krsUrl.includes('cek-pin') || krsHtml.includes('mhsfix-pin_baru')) {
+      if (pinBank) {
+        console.log(`[AUTO-LOGIN] Step 5: Mengisi PIN Bank (${pinBank})...`);
+        const csrfMatch = krsHtml.match(/name="_csrf"\s+value="([^"]+)"/);
+        const csrfToken = csrfMatch ? csrfMatch[1] : '';
+
+        const pinRes = await axios.post(
+          'https://siakad.uns.ac.id/registrasi/biodata/cek-pin-krs',
+          new URLSearchParams({ _csrf: csrfToken, 'MhsFix[pin_baru]': pinBank }).toString(),
+          {
+            headers: {
+              'User-Agent': UA,
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Cookie': buildCookieString(cookieJar),
+              'Referer': krsUrl
+            },
+            maxRedirects: 5,
+            validateStatus: () => true,
+            timeout: 20000
           }
-        }
+        );
+        collectCookies(cookieJar, pinRes);
+
+        // Re-akses input-krs setelah PIN Bank dikirim agar cookies final
+        const krsRes2 = await axios.get('https://siakad.uns.ac.id/registrasi/input-krs/index', {
+          headers: { 'User-Agent': UA, 'Cookie': buildCookieString(cookieJar) },
+          maxRedirects: 5,
+          validateStatus: () => true,
+          timeout: 20000
+        });
+        collectCookies(cookieJar, krsRes2);
+
+        console.log('[AUTO-LOGIN] Step 5: ✅ PIN Bank dikirim.');
       } else {
-        console.log('ℹ️ [AUTO-LOGIN] Halaman memerlukan PIN Bank. Isi "pinBank" di config.json.');
+        console.log('ℹ️ [AUTO-LOGIN] PIN Bank diperlukan. Isi "pinBank" di config.json.');
         pinRequiredWithoutValue = true;
       }
     }
 
-    // ═══ STEP 4: Ambil cookies dari tab KRS (yang sudah fresh & valid) ═══
-    const cookies = await krsPage.cookies('https://siakad.uns.ac.id');
-    console.log(`[AUTO-LOGIN] Mendapatkan ${cookies.length} cookies dari tab KRS.`);
-
-    const formattedCookies = cookies.map(c => ({
-      domain: c.domain, name: c.name, value: c.value,
-      path: c.path, secure: c.secure, httpOnly: c.httpOnly
-    }));
+    // ═══ STEP 6: Simpan cookies ═══
+    const formattedCookies = Object.values(cookieJar)
+      .filter(c => c.domain && c.domain.includes('uns.ac.id'))
+      .map(c => ({
+        domain: c.domain, name: c.name, value: c.value,
+        path: c.path || '/', secure: c.secure || false, httpOnly: c.httpOnly || false
+      }));
 
     config.cookies = formattedCookies;
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
-    console.log('[AUTO-LOGIN] 💾 config.json diperbarui dengan cookie terbaru!\n');
+    console.log(`[AUTO-LOGIN] 💾 ${formattedCookies.length} cookies disimpan ke config.json!\n`);
 
-    await browser.close();
     return { success: true, pinRequiredWithoutValue };
 
   } catch (err) {
     console.error(`❌ [AUTO-LOGIN] Error: ${err.message}`);
-    if (browser) {
-      try { await browser.close(); } catch { /* ignore */ }
-    }
     return { success: false, reason: `Error: ${err.message}` };
   } finally {
     isAutoLoginRunning = false;
   }
+}
+
+// ═══ HELPER FUNCTIONS ═══
+
+function collectCookies(jar, response) {
+  const setCookies = response.headers['set-cookie'];
+  if (!setCookies) return;
+  const arr = Array.isArray(setCookies) ? setCookies : [setCookies];
+  for (const raw of arr) {
+    const parts = raw.split(';').map(s => s.trim());
+    const [nameVal, ...attrs] = parts;
+    const eqIdx = nameVal.indexOf('=');
+    if (eqIdx < 0) continue;
+    const name = nameVal.substring(0, eqIdx);
+    const value = nameVal.substring(eqIdx + 1);
+    let domain = '', path = '/', secure = false, httpOnly = false;
+    for (const attr of attrs) {
+      const lower = attr.toLowerCase();
+      if (lower.startsWith('domain=')) domain = attr.substring(7).replace(/^\./, '');
+      if (lower.startsWith('path=')) path = attr.substring(5) || '/';
+      if (lower === 'secure') secure = true;
+      if (lower === 'httponly') httpOnly = true;
+    }
+    if (!domain) {
+      try { domain = new URL(response.config.url).hostname; } catch { domain = 'siakad.uns.ac.id'; }
+    }
+    jar[`${domain}:${name}`] = { name, value, domain, path, secure, httpOnly };
+  }
+}
+
+function buildCookieString(jar) {
+  return Object.values(jar).map(c => `${c.name}=${c.value}`).join('; ');
+}
+
+function decodeHtmlEntities(str) {
+  return str.replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+            .replace(/&#039;/g, "'");
 }
