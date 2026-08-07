@@ -1,24 +1,19 @@
 import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';
 import pino from 'pino';
-import axios from 'axios';
 import fs from 'fs';
-import { performAutoLogin } from './autoLogin.js';
+import { checkKrsWithPuppeteer } from './autoLogin.js';
 
 const CONFIG_FILE = './config.json';
 let waSock = null;
 let isMonitoringStarted = false;
 let isAlertSent = false;
-let isAutoLoggingIn = false;
 
 // Error Tracking & Rate Limiting
-let consecutiveErrors = 0;
 let isServerDownAlertSent = false;
-let isAutoLoginFailAlertSent = false;
-let isPinRequiredAlertSent = false;
 let lastErrorWaSentTime = 0;
 let lastHourlyStatusWaSentTime = Date.now();
-const ERROR_WA_COOL_DOWN_MS = 15 * 60 * 1000; // Minimal 15 menit antar pesan error sejenis untuk cegah spam
+const ERROR_WA_COOL_DOWN_MS = 15 * 60 * 1000; // Minimal 15 menit antar pesan error sejenis
 const HOURLY_STATUS_INTERVAL_MS = 60 * 60 * 1000; // 1 Jam untuk update status rutin
 
 function loadConfig() {
@@ -27,15 +22,6 @@ function loadConfig() {
     process.exit(1);
   }
   return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
-}
-
-function getCookieString(cookies) {
-  if (Array.isArray(cookies)) {
-    return cookies.map(c => `${c.name}=${c.value}`).join('; ');
-  } else if (typeof cookies === 'object') {
-    return Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
-  }
-  return '';
 }
 
 function formatJid(phone) {
@@ -86,193 +72,54 @@ async function sendWaMessage(message) {
   return sentCount > 0;
 }
 
-let isCheckRunning = false;
-
 async function checkKrsStatus() {
-  if (isCheckRunning || isAutoLoggingIn) return;
-  isCheckRunning = true;
+  const config = loadConfig();
+  const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
 
-  try {
-    const config = loadConfig();
-    const url = config.targetUrl || 'https://siakad.uns.ac.id/registrasi/input-krs/index';
-    const cookieHeader = getCookieString(config.cookies);
-    const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+  const result = await checkKrsWithPuppeteer(config);
 
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
-      'Cookie': cookieHeader
-    };
+  if (result.skipped) return;
 
-    const res = await axios.get(url, {
-      headers,
-      maxRedirects: 5,
-      validateStatus: () => true,
-      timeout: 20000
-    });
-
-    const html = res.data || '';
-    const finalUrl = res.request?.res?.responseUrl || url;
-    const statusCode = res.status;
-
-    // Reset error counter jika berhasil mendapat respon HTTP 200/302 normal
-    if (statusCode < 500) {
-      if (isServerDownAlertSent) {
-        console.log(`[${timestamp}] ✅ RECOVERY: Server Siakad kembali responsif!`);
-        await sendWaMessage(`✅ [RECOVERY]\n\nServer Siakad UNS sudah kembali online & responsif (HTTP ${statusCode}). Monitoring berlanjut...`);
-        isServerDownAlertSent = false;
-      }
-      consecutiveErrors = 0;
+  if (!result.success) {
+    const now = Date.now();
+    console.error(`[${timestamp}] ❌ Error Pengecekan Siakad: ${result.reason}`);
+    if (now - lastErrorWaSentTime > ERROR_WA_COOL_DOWN_MS) {
+      await sendWaMessage(`⚠️ [KONEKSI/LOGIN SIAKAD GAGAL]\n\nError: ${result.reason}\nBot akan terus mencoba ulang.`);
+      lastErrorWaSentTime = now;
     }
+    return;
+  }
 
-    // 1. Cek jika HTTP status code server error (500, 502, 503, 504)
-    if (statusCode >= 500) {
-      consecutiveErrors++;
-      console.log(`[${timestamp}] ⚠️ SERVER ERROR (HTTP ${statusCode}). Upaya gagal ke-${consecutiveErrors}`);
-      if (consecutiveErrors >= 3 && !isServerDownAlertSent) {
-        await sendWaMessage(
-          `⚠️ [SERVER ERROR]\n\nServer Siakad UNS mengalami gangguan/down (HTTP ${statusCode}).\nScript akan terus memantau hingga server pulih kembali.`
-        );
-        isServerDownAlertSent = true;
-      }
-      return;
-    }
+  if (result.isCekPin) {
+    console.log(`[${timestamp}] ⏳ Halaman PIN Bank (sudah login, menunggu PIN). Status: Belum bisa akses KRS.`);
+    isAlertSent = false;
+  } else if (result.isNotOpen) {
+    console.log(`[${timestamp}] ⏳ KRS BELUM MULAI (Status: Bukan Jadwal Input KRS)`);
+    isAlertSent = false;
 
-    // 2. Cek Cookie / Session Expired
-    const isCekPin = finalUrl.toLowerCase().includes('cek-pin') || html.includes('mhsfix-pin_baru');
-    const isLoginPage = (finalUrl.toLowerCase().includes('login') || !html.includes('Logout')) && !isCekPin;
-
-    if (isCekPin) {
-      // Halaman cek-pin = sudah login tapi belum melewati PIN Bank.
-      // Bukan expired, tapi KRS belum bisa diakses. Treat sebagai "belum mulai".
-      console.log(`[${timestamp}] ⏳ Halaman PIN Bank (sudah login, menunggu PIN). Status: Belum bisa akses KRS.`);
-      isAlertSent = false;
-
-      const now = Date.now();
-      if (now - lastHourlyStatusWaSentTime >= HOURLY_STATUS_INTERVAL_MS) {
-        lastHourlyStatusWaSentTime = now;
-        await sendWaMessage(
-          `ℹ️ [STATUS UPDATE]\n\nWaktu: ${timestamp}\nStatus: Sudah login, halaman PIN Bank aktif.\nBot tetap memantau setiap ${config.checkIntervalSeconds || 10} detik.`
-        );
-      }
-      return;
-    }
-
-    if (isLoginPage) {
-      console.log(`[${timestamp}] ⚠️ WARNING: Cookie/Session Siakad EXPIRED (di-redirect ke login)!`);
-
-      if (config.ssoUsername && config.ssoPassword && !config.ssoUsername.includes('EMAIL_UNS_ANDA')) {
-        isAutoLoggingIn = true;
-        console.log(`[${timestamp}] 🔄 Memulai Auto-Login via Puppeteer...`);
-        const loginResult = await performAutoLogin();
-        isAutoLoggingIn = false;
-
-        if (loginResult.success) {
-          console.log(`[${timestamp}] 🎉 Auto-Login BERHASIL!`);
-          isAutoLoginFailAlertSent = false;
-
-          if (loginResult.pinRequiredWithoutValue && !isPinRequiredAlertSent) {
-            await sendWaMessage(
-              `ℹ️ [PIN BANK REQUIRED]\n\nAuto-login berhasil, tetapi Siakad meminta PIN Bank!\nSilakan isi field 'pinBank' pada config.json.`
-            );
-            isPinRequiredAlertSent = true;
-          }
-
-          // Langsung evaluasi status KRS dari HTML yang didapat saat auto-login
-          // (tidak re-check dengan cookies karena WAF F5 memblokir request baru)
-          if (loginResult.krsHtml) {
-            const lrHtml = loginResult.krsHtml;
-            const lrUrl = loginResult.krsUrl || '';
-            const isNotOpenLr = lrHtml.includes('Saat ini bukan jadwal input KRS') || lrHtml.includes('bukan-jadwal-krs.webp');
-            const isCekPinLr = lrUrl.includes('cek-pin') || lrHtml.includes('mhsfix-pin_baru');
-
-            if (isCekPinLr) {
-              console.log(`[${timestamp}] ⏳ Halaman PIN Bank (sudah login, menunggu PIN).`);
-            } else if (isNotOpenLr) {
-              console.log(`[${timestamp}] ⏳ KRS BELUM MULAI (Status: Bukan Jadwal Input KRS)`);
-            } else if (lrHtml.includes('Logout')) {
-              console.log(`[${timestamp}] 🎉 PERHATIAN: KRS SUDAH DIMULAI / ADA PERUBAHAN TAMPILAN!`);
-              process.stdout.write('\x07');
-              if (!isAlertSent) {
-                await sendWaMessage(
-                  `🚨 [ALERT KRS SIAKAD UNS]\n\n⚡ KRS SUDAH DIMULAI!\nWaktu: ${timestamp}\nLink: ${url}\n\nSegera login & ambil mata kuliah pilihanmu! 🎯`
-                );
-                isAlertSent = true;
-              }
-            }
-          }
-          return;
-        } else {
-          console.error(`[${timestamp}] ❌ Auto-Login GAGAL: ${loginResult.reason}`);
-          const now = Date.now();
-          if (!isAutoLoginFailAlertSent || (now - lastErrorWaSentTime > ERROR_WA_COOL_DOWN_MS)) {
-            await sendWaMessage(
-              `❌ [AUTO-LOGIN GAGAL]\n\nGagal melakukan login otomatis ke SSO UNS!\nAlasan: ${loginResult.reason}\n\nMohon periksa kembali username/password di config.json.`
-            );
-            isAutoLoginFailAlertSent = true;
-            lastErrorWaSentTime = now;
-          }
-        }
-      } else {
-        const now = Date.now();
-        if (now - lastErrorWaSentTime > ERROR_WA_COOL_DOWN_MS) {
-          await sendWaMessage(
-            `⚠️ [COOKIE EXPIRED]\n\nCookie Siakad kamu sudah kedaluwarsa!\nSebab ssoUsername/ssoPassword belum diisi di config.json, mohon perbarui cookie manual atau isi kredensial SSO.`
-          );
-          lastErrorWaSentTime = now;
-        }
-      }
-      return;
-    }
-
-    // 3. Cek Indikator Jadwal KRS
-    const isNotOpen = html.includes('Saat ini bukan jadwal input KRS') || html.includes('bukan-jadwal-krs.webp');
-
-    if (isNotOpen) {
-      console.log(`[${timestamp}] ⏳ KRS BELUM MULAI (Status: Bukan Jadwal Input KRS)`);
-      isAlertSent = false;
-
-      const now = Date.now();
-      if (now - lastHourlyStatusWaSentTime >= HOURLY_STATUS_INTERVAL_MS) {
-        lastHourlyStatusWaSentTime = now;
-        await sendWaMessage(
-          `ℹ️ [STATUS UPDATE - SIAKAD NOTIFIER]\n\n` +
-          `Waktu: ${timestamp}\n` +
-          `Status: ⏳ KRS Belum Mulai (Bukan Jadwal Input KRS).\n\n` +
-          `Bot tetap aktif & memantau Siakad UNS setiap ${config.checkIntervalSeconds || 10} detik.`
-        );
-      }
-    } else {
-      console.log(`[${timestamp}] 🎉 PERHATIAN: KRS SUDAH DIMULAI / ADA PERUBAHAN TAMPILAN HALAMAN!`);
-      process.stdout.write('\x07'); // Beep sound
-
-      if (!isAlertSent) {
-        const msg = (
-          `🚨 [ALERT KRS SIAKAD UNS]\n\n` +
-          `⚡ KRS SUDAH DIMULAI ATAU TERJADI PERUBAHAN TAMPILAN HALAMAN!\n` +
-          `Waktu: ${timestamp}\n` +
-          `Link Siakad: ${url}\n\n` +
-          `Segera login & ambil mata kuliah pilihanmu! 🎯`
-        );
-        await sendWaMessage(msg);
-        isAlertSent = true;
-      }
-    }
-
-  } catch (err) {
-    consecutiveErrors++;
-    const errMsg = err.message || err.toString();
-    console.error(`[${timestamp}] ❌ Error HTTP / Koneksi: ${errMsg} (Gagal ke-${consecutiveErrors})`);
-
-    if (consecutiveErrors >= 3 && !isServerDownAlertSent) {
+    const now = Date.now();
+    if (now - lastHourlyStatusWaSentTime >= HOURLY_STATUS_INTERVAL_MS) {
+      lastHourlyStatusWaSentTime = now;
       await sendWaMessage(
-        `⚠️ [KONEKSI GAGAL]\n\nGagal terhubung ke Siakad UNS (${errMsg}).\nScript tetap berjalan dan akan terus mencoba ulang.`
+        `ℹ️ [STATUS UPDATE]\n\nWaktu: ${timestamp}\nStatus: KRS Belum Dimulai (Bukan Jadwal Input KRS).\nBot tetap aktif memantau setiap ${config.checkIntervalSeconds || 10} detik.`
       );
-      isServerDownAlertSent = true;
     }
-  } finally {
-    isCheckRunning = false;
+  } else if (result.isKrsOpen) {
+    console.log(`[${timestamp}] 🎉 PERHATIAN: KRS SUDAH DIMULAI / ADA PERUBAHAN TAMPILAN HALAMAN!`);
+    process.stdout.write('\x07');
+
+    if (!isAlertSent) {
+      const targetUrl = config.targetUrl || 'https://siakad.uns.ac.id/registrasi/input-krs/index';
+      const msg = (
+        `🚨 [ALERT KRS SIAKAD UNS]\n\n` +
+        `⚡ KRS SUDAH DIMULAI ATAU TERJADI PERUBAHAN TAMPILAN HALAMAN!\n` +
+        `Waktu: ${timestamp}\n` +
+        `Link Siakad: ${targetUrl}\n\n` +
+        `Segera login & ambil mata kuliah pilihanmu! 🎯`
+      );
+      await sendWaMessage(msg);
+      isAlertSent = true;
+    }
   }
 }
 

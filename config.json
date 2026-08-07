@@ -12,7 +12,7 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "TScd33794c027",
-      "value": "08c550b0e8ab2000fff1fd273cb1b3256b9cbdf2e27854b7886dc547047ff7b6bb6267e68897bee0084e7637541130000b8969ef2e81c310d97a1589699c62edf1b5cd25012a104e2efe86b36b615649b3d109dbfbf229b0d232a5291df623b2",
+      "value": "08c550b0e8ab2000b9464ce04503b5f302022e685a3857f8c886d1041882c2122ec41101073b409b08e270a8c01130002f296d0ee29bc4d0fa0f552ea6f36075b198dc9e46bb0e697b0e4ccd5016a010f4119beb9d32f1940d252b830830ec2d",
       "path": "/",
       "secure": false,
       "httpOnly": false
@@ -20,7 +20,7 @@
     {
       "domain": "sso.uns.ac.id",
       "name": "SimpleSAMLSessionID",
-      "value": "cd5eccf7365bc2ab9f39927c4b99bf4f",
+      "value": "a7863d6ff9fbb8a0b5eff2397a8b323a",
       "path": "/",
       "secure": true,
       "httpOnly": true
@@ -28,7 +28,7 @@
     {
       "domain": "sso.uns.ac.id",
       "name": "SimpleSAMLAuthToken",
-      "value": "_1d93f1706728cd247356752b62fbca5bddb3171d23",
+      "value": "_7fc7e9415a923141fdc4bab5c041683b90e34e9c1d",
       "path": "/",
       "secure": true,
       "httpOnly": true
@@ -36,7 +36,7 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "PHPSESSID",
-      "value": "c6dc47d0326e6b645278c88dc37d44cf",
+      "value": "4aa669a8e2245a8da1e6807a89d416d3",
       "path": "/",
       "secure": false,
       "httpOnly": true
@@ -52,7 +52,7 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "_csrf",
-      "value": "9d863e865e60cdcca31abb8035e6b4bfe5f362f92ccbbe21963234804c83fdada%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22T0Rgj98Z6azqQg3C1TvLMdHfKhHoUuB-%22%3B%7D",
+      "value": "0a9de13c9c165960414c1274fb5f9bc7a23c5bb42544f60d745ffcda1db83a63a%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22YozUL2kYJpdpdo60o99IUs_DSreYrXbm%22%3B%7D",
       "path": "/",
       "secure": false,
       "httpOnly": true
@@ -60,7 +60,7 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "TS017c575c",
-      "value": "01b52f714d1c11d79b769d22dcd911021830a006ef0937c0adf227fd257912566a0f7b36e6ee263d72c98a4701d5d9e7a88d9675d822d231959cb09af6687b3a443491c3e79ad05bb1776a5ca2ed1323bed8f69427a6339183877a0da47ba014e5bcbe98e0",
+      "value": "01b52f714d31e7a92957f874507891583e17e95489208d315edc057aa3b5a93662bc4484f0198a5f49d555ebda057166eeef90fbb535843c78772fba7cf1f77f956472fb82cba53a34924369e52d940cbd2e9fa9b7da749a2e62ea332d88b909ea6815065d",
       "path": "/",
       "secure": false,
       "httpOnly": false
@@ -68,7 +68,7 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "TS03629b59029",
-      "value": "08c550b0e8ab28004935f2b9309e271e36b81edc0daaff71c11b7094e679595825f3854bbaa129682cf0a26cd9b8b797",
+      "value": "08c550b0e8ab280097fa7b8a4add410d9b730955ed7e191d75ff9b404fe9fd4604e3d636877abf1db132e6e154b64806",
       "path": "/",
       "secure": false,
       "httpOnly": false
