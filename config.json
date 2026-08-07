@@ -11,8 +11,8 @@
   "cookies": [
     {
       "domain": "siakad.uns.ac.id",
-      "name": "TS00000000076",
-      "value": "08c550b0e8ab2800ec829d8fa45ffbb84aa57f84e181c669c1cc0601aa4697c27e655ada8c9b92ea0b2c3f83348e9294089e323ade09d000fd524561718cdf475d88a96062bdf8dff3e50062f1553554737de02560cb63f2befdd3f3be133b802b3ef24911a038f6d95b8da9dc210f44caaef4bcc1d7d34b7d7d0befa1987be61809ad71fe58b3be07a8dc97d0f8fa6c89e767e24f79dcac05fcb991cd4148d65eb402ddff3fff295d5be7ff07ac5c720d0d57e67fe53fe92a8cc68a8f84a17a7a0cad429e67d60ada316edc289c4135a9352b2903a3eda205b0f17d856eafd323c7e7c5eaedbf6579d2e479934a0a9dfbc70f14664fc69c3c2fb5b329302071bd47e4231943cefe",
+      "name": "TS03629b59029",
+      "value": "08c550b0e8ab2800450d614b9a048d7e201761ffc3735f7280752d9c1e58dee6edc92bc182c8e3b71ba02f39f65e088f",
       "path": "/",
       "secure": false,
       "httpOnly": false
@@ -20,7 +20,7 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "TS017c575c",
-      "value": "01b52f714dcec596499b22fe7ce7df031791391cc898ebb1d3326e02a5f0e90db1ddfbb83bccbe3561914a8cae80fb2f6d9bed971de19a6670d9640feb89c370c5b2988581afbfb5a0140cf6f12245b3010faf23f8d10c29e4f6c5ca63e2331b1e1d50385a",
+      "value": "01b52f714d04985d695153cd8f8603acb4f705fa7a6f095d007896c89f6858917fbb22058fe1529ba9820baffff3e3f2d88d48dbd62924cf16b82b247824f5aa14b8c06b72c87b8c7a9dcab450df878f92b3d304c53fe5412c74190c6caaa1d07d28c864cd",
       "path": "/",
       "secure": false,
       "httpOnly": false
@@ -28,7 +28,7 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "PHPSESSID",
-      "value": "0ef48f3d99e68e3062e4ac21cae66f0d",
+      "value": "309257a03a3f53b9b6015771faa87fc6",
       "path": "/",
       "secure": false,
       "httpOnly": true
@@ -36,23 +36,23 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "_csrf",
-      "value": "c6ee9072906af7479f2e2ac494b538f9e7146f13bf3d65f7cddcfc21b889c03ba%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22tAXYjenyQgmeY5eTwi2EQuSghrsG1ySy%22%3B%7D",
+      "value": "80172ebb989670d45dff284bc9629dca3774384629502ab387790e0a2d9cbe24a%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22RNCyuX1ocJu5nfeKWNNd8EH5QaS2utkK%22%3B%7D",
       "path": "/",
       "secure": false,
       "httpOnly": true
     },
     {
       "domain": "siakad.uns.ac.id",
-      "name": "TSPD_101_DID",
-      "value": "08c550b0e8ab2800ec829d8fa45ffbb84aa57f84e181c669c1cc0601aa4697c27e655ada8c9b92ea0b2c3f83348e9294089e323ade063800f0af8804ded4d1c31a0425afc8c8acd2ca533a6b9ea18f4d09b01a9b1b38a0c80b04dfa6d9ba142105faef87673994a16e23853e6c64194f",
+      "name": "TS00000000076",
+      "value": "08c550b0e8ab28005f088fa423d755c2569d37267a44f5b1d2802252da9d041e7d7dd518f7e35ce46c26d9a7a1b40e70086df8449e09d000af8338f8917f97b1f061f7de6b63528c5f9de236d008f5e29d5116a94a09f034eb6a9e853a0a1843729bab03ad76df13df759b4be24f96caa8d544382e5fd0a0566f5ad8e4ff452cf1fd7f80f1669fb5392eef933c20e4947de50d47c1fd224249d2740b8a282fa21fc367e598527168fc28baff7d8ee82fddc83e36d35b97b5c7790bef447c0e399ede6373f2282fc271844d0ed60f0597009cc1439ec763825e4b2bb3bcaefa24d6c951c79d2e7924c9efd758b9d78b4eb03d0b06067ae74236aa16b8cfdacc49c757382335e7540d",
       "path": "/",
       "secure": false,
       "httpOnly": false
     },
     {
       "domain": "siakad.uns.ac.id",
-      "name": "TS03629b59029",
-      "value": "08c550b0e8ab28009c3cd4d75588f89583ec41d967f9c42152f3a6e647e9a1045c5eb9a0244a1ef136e3a10bfec9882d",
+      "name": "TSPD_101_DID",
+      "value": "08c550b0e8ab28005f088fa423d755c2569d37267a44f5b1d2802252da9d041e7d7dd518f7e35ce46c26d9a7a1b40e70086df8449e0638003467ca4a59ed511544e6272eb2681dc5459590eab9ea6b8d97f39365a7ce5067e859ccd5abc383b4cd34540287725e5d3766c96ba624db23",
       "path": "/",
       "secure": false,
       "httpOnly": false
@@ -60,7 +60,7 @@
     {
       "domain": "siakad.uns.ac.id",
       "name": "TScd33794c027",
-      "value": "08c550b0e8ab200006c381fc82652bb1b7e186165f28afcfbb9d402bfc34c0d9f3569bfa16092803087e0740651130006523a248d15323bccebf557b664a544bebb610aa6895ab811736ddea020174d47a43f1c8fad8846bafdcb54774b9dfeb",
+      "value": "08c550b0e8ab2000fe3bff3a0b6b79ef18eb2482cc1727234b7dfea86cf41061d15f1ba5a8a543860811233ded113000e1ffd901a73995e3cee9091ab35dc87d8a49ea1211d79f40be4eb2187e165a6918c528759eda5df1f2bd1427bdc5a415",
       "path": "/",
       "secure": false,
       "httpOnly": false

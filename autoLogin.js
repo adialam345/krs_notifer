@@ -64,7 +64,16 @@ export async function performAutoLogin() {
     browser = await puppeteer.launch({
       executablePath,
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--disable-extensions'
+      ]
     });
 
     const page = await browser.newPage();
@@ -73,7 +82,7 @@ export async function performAutoLogin() {
     );
 
     console.log('[AUTO-LOGIN] Membuka halaman login SAML SSO UNS...');
-    await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'networkidle2', timeout: 35000 });
+    await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 35000 });
 
     // Tunggu input username & password SSO
     await page.waitForSelector('input[name="username"]', { timeout: 15000 });
@@ -110,7 +119,14 @@ export async function performAutoLogin() {
     }
 
     console.log('[AUTO-LOGIN] Menavigasi ke halaman Input KRS untuk mengaktifkan sesi...');
-    await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'networkidle2', timeout: 35000 });
+    await new Promise(r => setTimeout(r, 1500));
+    try {
+      await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 35000 });
+    } catch (errNav) {
+      console.log(`ℹ️ [AUTO-LOGIN] Navigasi awal sedang teralihkan (${errNav.message}). Menunggu 2 detik...`);
+      await new Promise(r => setTimeout(r, 2000));
+      await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 35000 }).catch(() => {});
+    }
 
     let pinRequiredWithoutValue = false;
     if (page.url().includes('cek-pin-krs') || (await page.$('#mhsfix-pin_baru'))) {

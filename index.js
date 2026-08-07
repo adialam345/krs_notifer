@@ -136,8 +136,11 @@ async function checkKrsStatus() {
       return;
     }
 
-    // 2. Cek Cookie / Session Expired
-    const isLoginPage = finalUrl.toLowerCase().includes('login') || !html.includes('Logout');
+    // 2. Cek Cookie / Session Expired / Form PIN Bank Prompt
+    const isLoginPage = finalUrl.toLowerCase().includes('login') ||
+                        finalUrl.toLowerCase().includes('cek-pin') ||
+                        html.includes('mhsfix-pin_baru') ||
+                        !html.includes('Logout');
 
     if (isLoginPage) {
       console.log(`[${timestamp}] ⚠️ WARNING: Cookie/Session Siakad EXPIRED (di-redirect ke login)!`);
