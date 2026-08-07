@@ -84,10 +84,16 @@ export async function performAutoLogin() {
     await page.type('input[name="password"]', password);
 
     console.log('[AUTO-LOGIN] Menekan tombol Masuk...');
-    await Promise.all([
-      page.click('button[type="submit"]'),
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 35000 })
-    ]);
+    await page.click('button[type="submit"]').catch(() => {});
+
+    // Polling tunggu redirect dari SAML SSO ke SIAKAD selesai (maks 15 detik)
+    for (let i = 0; i < 15; i++) {
+      await new Promise(r => setTimeout(r, 1000));
+      const currentUrl = page.url();
+      if (currentUrl.includes('siakad.uns.ac.id') && !currentUrl.includes('saml/login')) {
+        break;
+      }
+    }
 
     const currentUrl = page.url();
     console.log(`[AUTO-LOGIN] URL setelah login: ${currentUrl}`);

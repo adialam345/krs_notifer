@@ -11,127 +11,59 @@
   "cookies": [
     {
       "domain": "siakad.uns.ac.id",
-      "hostOnly": true,
-      "httpOnly": true,
-      "name": "_csrf",
-      "path": "/",
-      "sameSite": "lax",
-      "secure": false,
-      "session": true,
-      "storeId": null,
-      "value": "b34b405eaad1d025d7f8b9a69e5f97ae5187d5e476d29c4191c3183bffeee84ba%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22dum6l0fISbhTV2z7P6cI0ka5ijueuZzi%22%3B%7D"
-    },
-    {
-      "domain": "siakad.uns.ac.id",
-      "hostOnly": true,
-      "httpOnly": false,
       "name": "TScd33794c027",
+      "value": "08c550b0e8ab2000ca27b7a9f807f918f340071726bce919586504facfbaf6bacdce39e2d09f4e4f0885d698c31130002667fb1abd2ce4af8d35df303ec9029a45b070de530f2c2db596dd24c2621d2f2a35a29688c089c15ad7b84360074f59",
       "path": "/",
-      "sameSite": null,
       "secure": false,
-      "session": true,
-      "storeId": null,
-      "value": "08c550b0e8ab200069d71743c38787afcbf3776aff63367b48c48285eb0f4689d82316fa80dc685308e453173c113000919bd7230df6e9f6c43d072044ca45728690d29d567a3a7e5414fa8c2a20f04c7c72c63793c9e948705677f1a58db104"
-    },
-    {
-      "domain": ".uns.ac.id",
-      "expirationDate": 1817066314.603273,
-      "hostOnly": false,
-      "httpOnly": false,
-      "name": "_ga",
-      "path": "/",
-      "sameSite": null,
-      "secure": false,
-      "session": false,
-      "storeId": null,
-      "value": "GA1.3.2003566152.1778599927"
+      "httpOnly": false
     },
     {
       "domain": "siakad.uns.ac.id",
-      "hostOnly": true,
-      "httpOnly": false,
-      "name": "TS00000000076",
+      "name": "_csrf",
+      "value": "c7c9fb42d788b2b36fd9d12dbd62315bf05b1e438572c3b9a7c478c3922dd334a%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%228PRwxTS9_Np3lcBqAgQrytseFgA9EzDK%22%3B%7D",
       "path": "/",
-      "sameSite": null,
       "secure": false,
-      "session": true,
-      "storeId": null,
-      "value": "08c550b0e8ab28000cee8cf4e783760d8d482eda045f2dc9cb9117aa769648539863541752a96ceb92750bb4956b19b80884b433a309d000ba1a83a839307d0806252c8446cdf51b4c6583cfc962196a5bf46fdfab8a8f9d7f0b3e6c36bcde2962b0332aa6043849b4b0929fc904264e17afb1ba1f00438201ec04defcbae73ad974c669802075c4e8fa1272615a7d4752b027b9f6e776b6a7b5b6d46ac345f62b7488091b17d2af6e1c0d9ff008b874438da66e9fccf982e0360f4dd8554767a3949735d3d8d9323a4313ff9f15a62ebb4593dcffd03dfc7bac4f27ad585133fde6cd62c4e5c56426533b928cf4a205d9854dec525d3af7e9b781a9e98847925fdffed20027d263"
-    },
-    {
-      "domain": ".uns.ac.id",
-      "expirationDate": 1813160272.6886,
-      "hostOnly": false,
-      "httpOnly": false,
-      "name": "_ga_F6CXYGH6G4",
-      "path": "/",
-      "sameSite": null,
-      "secure": false,
-      "session": false,
-      "storeId": null,
-      "value": "GS2.1.s1778599927$o1$g1$t1778600272$j59$l0$h603448009"
-    },
-    {
-      "domain": ".uns.ac.id",
-      "expirationDate": 1817066314.914993,
-      "hostOnly": false,
-      "httpOnly": false,
-      "name": "_ga_NG9YK7CQ1F",
-      "path": "/",
-      "sameSite": null,
-      "secure": false,
-      "session": false,
-      "storeId": null,
-      "value": "GS2.3.s1782506314$o3$g0$t1782506314$j60$l0$h0"
+      "httpOnly": true
     },
     {
       "domain": "siakad.uns.ac.id",
-      "hostOnly": true,
-      "httpOnly": true,
       "name": "PHPSESSID",
+      "value": "171dca08504044dea48cf3b2553c884b",
       "path": "/",
-      "sameSite": null,
       "secure": false,
-      "session": true,
-      "storeId": null,
-      "value": "2d58d1090c80a1faeb1a4667b74171fe"
+      "httpOnly": true
     },
     {
       "domain": "siakad.uns.ac.id",
-      "hostOnly": true,
-      "httpOnly": false,
       "name": "TS017c575c",
+      "value": "01b52f714d87b76ae3ba6a21c8cd19f72a93eff289130de68d5ab5cf1fe734e7409b001950a58b5ce89207aab81d88cfb42dadde88f6a65b4d4266df73cb4eff6123214e76dd8e0f3222b10e494327829432ba0c589517ba2dfb584ce443c2271b56b8940a",
       "path": "/",
-      "sameSite": null,
       "secure": false,
-      "session": true,
-      "storeId": null,
-      "value": "01b52f714d8f31b9976bb9d2f978678dc80159cce5c23ef60ed1ec49f97ed7bc51792748849346534414236605c3bb0f4752f7f59c18b0c68d2e7b7ba6593d991afcdca98ccb8b0b92b41f80adc8b6714691981983ec6d8edc99dde15d8c25a396f29ef168"
+      "httpOnly": false
     },
     {
       "domain": "siakad.uns.ac.id",
-      "expirationDate": 1786125646.273564,
-      "hostOnly": true,
-      "httpOnly": false,
+      "name": "TS00000000074",
+      "value": "08c550b0e8ab2800a3f0d61f64ba382847a946f294dd5060afe19549e171bc24fcc49003f0dd605b8458b9825e91f71208584e370807e000807a4b13bbb07807220a6a60fdb575edb918c0e06c4ac3c599e8344742eef33bb38ba1d80e2372948640bcefbcc784e06f0d21d13d709dd2afce7ee360ce92a1b3e71d0b1552cdea096597dbcee72a7c1a1dc30d85a7f39018d89bef4e5843d0ef5cf7e0301357f92ee24253b486dabd68886141c6f5fee438eb06b3133d2f621ececab5fb1c4bfac9ddf3f9a4e0debb06ce94a7fe83e4dc493a02301876dff43943820e3f0e3633db98122a472655a92cacd23eb0522d9b4c6ac28f8580fcd4a34643dba4fe0318b92aeeca44784db9cb17097e014b88d642187fc7ca52d012",
+      "path": "/",
+      "secure": false,
+      "httpOnly": false
+    },
+    {
+      "domain": "siakad.uns.ac.id",
+      "name": "TS00000000076",
+      "value": "08c550b0e8ab2800a3f0d61f64ba382847a946f294dd5060afe19549e171bc24fcc49003f0dd605b8458b9825e91f71208584e370809d0002cdb3312440acddb26c216d2143c58d2548b34c7877d6bf009079a4248e8b06adaef3b5ac336bd166cf56b24d05e43b11ce8e340ffab605672dada89be28f8b39a07e9d2808d878e85788ea61852fa65db17c51eadf664c9e4ce32af3aa1a7f64ed8a55369eaef25566fad65de398fcd4c99746d529c8f37096229f9051dda2e5424f22574330054a4e1d8549d0f1697a3904c0e3a73d2cf0bfae6837478dcfde5370066cb1ca32079fb5d9b69facf50565561f5c1aeccf9d0c9613e3d13992086cdbe0358be79dbff896d0ca8d4e495",
+      "path": "/",
+      "secure": false,
+      "httpOnly": false
+    },
+    {
+      "domain": "siakad.uns.ac.id",
       "name": "TS03629b59029",
+      "value": "08c550b0e8ab28006a5076bc7bd3cd6aae956c337f5c141f7a4ee3539d9e7ca670e5fb95aa4654252c84dea0899882f9",
       "path": "/",
-      "sameSite": null,
       "secure": false,
-      "session": false,
-      "storeId": null,
-      "value": "08c550b0e8ab28008633507864b330d4385bc3d0136f1479d3513a6583483e51068846c3c7ea61b76b40c79dab631101"
-    },
-    {
-      "domain": "siakad.uns.ac.id",
-      "hostOnly": true,
-      "httpOnly": false,
-      "name": "TSPD_101_DID",
-      "path": "/",
-      "sameSite": null,
-      "secure": false,
-      "session": true,
-      "storeId": null,
-      "value": "08c550b0e8ab28000cee8cf4e783760d8d482eda045f2dc9cb9117aa769648539863541752a96ceb92750bb4956b19b80884b433a3063800c0c379a7bacf81d494fea79c5987c9064b4fe63c52fb397d227f0af5737104e1a2fbb1ad1ec391ab7e5df63ba72aced24d68ff575dea3c0e"
+      "httpOnly": false
     }
   ]
 }
