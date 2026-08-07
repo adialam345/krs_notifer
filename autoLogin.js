@@ -40,7 +40,7 @@ let pageInstance = null;
 let isCheckRunning = false;
 
 /**
- * Mendapatkan atau menginisialisasi single browser page instance yang persistent.
+ * Mendapatkan atau menginisialisasi single browser page instance yang ultra-ringan & cepat.
  */
 async function getOrInitPage(config) {
   if (browserInstance && pageInstance && !pageInstance.isClosed()) {
@@ -52,7 +52,7 @@ async function getOrInitPage(config) {
     throw new Error('Executable Browser (Chrome/Chromium) tidak ditemukan di sistem!');
   }
 
-  console.log(`[PUPPETEER] Inisialisasi headless browser: ${executablePath}`);
+  console.log(`[PUPPETEER] Inisialisasi High-Efficiency Headless Chromium: ${executablePath}`);
 
   if (browserInstance) {
     try { await browserInstance.close(); } catch { /* ignore */ }
@@ -70,7 +70,19 @@ async function getOrInitPage(config) {
       '--no-first-run',
       '--no-zygote',
       '--disable-gpu',
-      '--disable-extensions'
+      '--disable-extensions',
+      '--disable-remote-fonts',
+      '--disable-speech-api',
+      '--disable-background-networking',
+      '--disable-background-timer-throttling',
+      '--disable-breakpad',
+      '--disable-component-update',
+      '--disable-domain-reliability',
+      '--mute-audio',
+      '--no-pings',
+      '--password-store=basic',
+      '--blink-settings=imagesEnabled=false',
+      '--js-flags="--max-old-space-size=128"'
     ]
   });
 
@@ -79,12 +91,23 @@ async function getOrInitPage(config) {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   );
 
+  // Blokir aset yang tidak diperlukan (gambar, CSS, font, media) untuk menghemat RAM & mempercepat akses (150ms)
+  await pageInstance.setRequestInterception(true);
+  pageInstance.on('request', (req) => {
+    const resourceType = req.resourceType();
+    if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+      req.abort();
+    } else {
+      req.continue();
+    }
+  });
+
   return pageInstance;
 }
 
 /**
- * Melakukan pemeriksaan halaman KRS Siakad UNS menggunakan Chromium persistent.
- * Secara otomatis menangani SSO Login & PIN Bank jika diperlukan.
+ * Melakukan pemeriksaan halaman KRS Siakad UNS menggunakan Chromium ultra-ringan.
+ * Otomatis menangani SSO Login & PIN Bank secara efisien.
  */
 export async function checkKrsWithPuppeteer(config) {
   if (isCheckRunning) {
@@ -105,24 +128,24 @@ export async function checkKrsWithPuppeteer(config) {
 
     if (needsSso) {
       console.log('[AUTO-LOGIN] Membuka halaman login SSO UNS...');
-      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 35000 });
+      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 15000 });
 
-      const userInput = await page.waitForSelector('input[name="username"]', { timeout: 15000 }).catch(() => null);
+      const userInput = await page.waitForSelector('input[name="username"]', { timeout: 8000 }).catch(() => null);
       if (userInput) {
         console.log(`[AUTO-LOGIN] Mengisi kredensial SSO untuk akun: ${config.ssoUsername}`);
         await page.type('input[name="username"]', config.ssoUsername);
         await page.type('input[name="password"]', config.ssoPassword);
         await Promise.all([
-          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {}),
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {}),
           page.click('button[type="submit"]').catch(() => {})
         ]);
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 1000));
       }
     }
 
     // 2. Navigasi ke Halaman Input KRS
-    await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 35000 });
-    await new Promise(r => setTimeout(r, 1500));
+    await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await new Promise(r => setTimeout(r, 500));
 
     currentUrl = page.url();
     let html = await page.content();
@@ -130,18 +153,18 @@ export async function checkKrsWithPuppeteer(config) {
     // Jika setelah navigasi krs malah terlempar ke SSO lagi, lakukan re-login sekali lagi
     if (currentUrl.includes('sso.uns.ac.id') || currentUrl.includes('saml/login')) {
       console.log('[AUTO-LOGIN] Sesi expired, melakukan login SSO ulang...');
-      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 35000 });
-      const userInput = await page.waitForSelector('input[name="username"]', { timeout: 15000 }).catch(() => null);
+      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 15000 });
+      const userInput = await page.waitForSelector('input[name="username"]', { timeout: 8000 }).catch(() => null);
       if (userInput) {
         await page.type('input[name="username"]', config.ssoUsername);
         await page.type('input[name="password"]', config.ssoPassword);
         await Promise.all([
-          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {}),
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {}),
           page.click('button[type="submit"]').catch(() => {})
         ]);
-        await new Promise(r => setTimeout(r, 2000));
-        await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 35000 });
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise(r => setTimeout(r, 1000));
+        await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await new Promise(r => setTimeout(r, 500));
         currentUrl = page.url();
         html = await page.content();
       }
@@ -150,19 +173,18 @@ export async function checkKrsWithPuppeteer(config) {
     // 3. Cek & Handle Form PIN Bank
     if ((currentUrl.includes('cek-pin') || html.includes('mhsfix-pin_baru')) && config.pinBank) {
       console.log(`[AUTO-LOGIN] Memasukkan PIN Bank (${config.pinBank})...`);
-      const pinInput = await page.waitForSelector('#mhsfix-pin_baru', { timeout: 8000 }).catch(() => null);
+      const pinInput = await page.waitForSelector('#mhsfix-pin_baru', { timeout: 5000 }).catch(() => null);
       if (pinInput) {
         await page.type('#mhsfix-pin_baru', config.pinBank);
         await Promise.all([
-          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {}),
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {}),
           page.click('button[type="submit"]').catch(() => {})
         ]);
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 1000));
 
-        // Memastikan halaman akhir benar-benar berada di input-krs/index
         if (!page.url().includes('input-krs/index')) {
-          await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 25000 });
-          await new Promise(r => setTimeout(r, 1500));
+          await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 15000 });
+          await new Promise(r => setTimeout(r, 500));
         }
 
         currentUrl = page.url();
@@ -198,7 +220,6 @@ export async function checkKrsWithPuppeteer(config) {
 
   } catch (err) {
     console.error(`❌ [PUPPETEER ERROR] ${err.message}`);
-    // Reset instance jika terjadi error agar bisa dire-init pada loop berikutnya
     if (browserInstance) {
       try { await browserInstance.close(); } catch { /* ignore */ }
       browserInstance = null;
