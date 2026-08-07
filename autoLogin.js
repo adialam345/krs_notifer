@@ -35,10 +35,19 @@ function findChromeExecutable() {
   return null;
 }
 
+let isAutoLoginRunning = false;
+
 export async function performAutoLogin() {
+  if (isAutoLoginRunning) {
+    console.log('[AUTO-LOGIN] ⏳ Auto-login sedang berjalan di proses lain, mengabaikan pemicu ganda.');
+    return { success: false, reason: 'Auto-login sedang berjalan' };
+  }
+
+  isAutoLoginRunning = true;
   console.log('\n[🔄 AUTO-LOGIN] Memulai proses login otomatis ke SSO UNS...');
 
   if (!fs.existsSync(CONFIG_FILE)) {
+    isAutoLoginRunning = false;
     return { success: false, reason: 'File config.json tidak ditemukan' };
   }
 
@@ -47,6 +56,7 @@ export async function performAutoLogin() {
   const password = config.ssoPassword;
 
   if (!username || !password || username.includes('EMAIL_UNS_ANDA')) {
+    isAutoLoginRunning = false;
     return { success: false, reason: 'Kredensial ssoUsername/ssoPassword belum diisi di config.json' };
   }
 
@@ -54,6 +64,7 @@ export async function performAutoLogin() {
   if (!executablePath) {
     const errorMsg = 'Executable Browser (Chrome/Edge/Chromium) tidak ditemukan di sistem!';
     console.error(`❌ [AUTO-LOGIN] ${errorMsg}`);
+    isAutoLoginRunning = false;
     return { success: false, reason: errorMsg };
   }
 
@@ -64,6 +75,7 @@ export async function performAutoLogin() {
     browser = await puppeteer.launch({
       executablePath,
       headless: true,
+      pipe: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -176,5 +188,7 @@ export async function performAutoLogin() {
     console.error(`❌ [AUTO-LOGIN] Error saat auto-login: ${err.message}`);
     if (browser) await browser.close();
     return { success: false, reason: `Error: ${err.message}` };
+  } finally {
+    isAutoLoginRunning = false;
   }
 }
