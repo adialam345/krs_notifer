@@ -130,10 +130,24 @@ async function checkKrsStatus() {
 async function connectToWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
 
+  if (waSock) {
+    try {
+      waSock.ev.removeAllListeners();
+      waSock.end(undefined);
+    } catch { /* ignore */ }
+    waSock = null;
+  }
+
   waSock = makeWASocket({
     auth: state,
     logger: pino({ level: 'silent' }),
-    printQRInTerminal: false
+    printQRInTerminal: false,
+    connectTimeoutMs: 60000,
+    defaultQueryTimeoutMs: 60000,
+    keepAliveIntervalMs: 25000,
+    retryRequestOptions: {
+      maxRetries: 5
+    }
   });
 
   waSock.ev.on('creds.update', saveCreds);
@@ -151,7 +165,7 @@ async function connectToWhatsApp() {
     if (connection === 'close') {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-      console.log(`[WA] Koneksi terputus (Status: ${statusCode}). Reconnecting: ${shouldReconnect}`);
+      console.log(`[WA] Koneksi terputus (Status: ${statusCode || 'unknown'}). Reconnecting: ${shouldReconnect}`);
 
       if (shouldReconnect) {
         setTimeout(connectToWhatsApp, 5000);
@@ -159,11 +173,11 @@ async function connectToWhatsApp() {
         console.log('[WA] Sesi WhatsApp logout. Hapus folder auth_info_baileys untuk scan ulang.');
       }
     } else if (connection === 'open') {
-      console.log('\n==================================================');
-      console.log('  ✅ WHATSAPP BERHASIL TERHUBUNG VIA BAILEYS!');
-      console.log('==================================================\n');
-
       if (!isMonitoringStarted) {
+        console.log('\n==================================================');
+        console.log('  ✅ WHATSAPP BERHASIL TERHUBUNG VIA BAILEYS!');
+        console.log('==================================================\n');
+
         isMonitoringStarted = true;
         const config = loadConfig();
         const interval = (config.checkIntervalSeconds || 10) * 1000;
@@ -183,6 +197,8 @@ async function connectToWhatsApp() {
 
         // Interval loop
         setInterval(checkKrsStatus, interval);
+      } else {
+        console.log('[WA] ✅ WhatsApp terhubung kembali (reconnected).');
       }
     }
   });

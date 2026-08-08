@@ -110,6 +110,8 @@ async function getOrInitPage(config) {
   });
 
   pageInstance = await browserInstance.newPage();
+  pageInstance.setDefaultNavigationTimeout(45000);
+  pageInstance.setDefaultTimeout(45000);
   await pageInstance.setUserAgent(
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   );
@@ -140,7 +142,7 @@ export async function checkKrsWithPuppeteer(config) {
 
     if (needsSso) {
       console.log('[AUTO-LOGIN] Membuka halaman login SSO UNS...');
-      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
+      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 35000 }).catch(() => {});
 
       const userInput = await page.waitForSelector('input[name="username"]', { timeout: 8000 }).catch(() => null);
       if (userInput) {
@@ -153,7 +155,7 @@ export async function checkKrsWithPuppeteer(config) {
     }
 
     // 2. Navigasi ke Halaman Input KRS
-    await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
+    await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 35000 }).catch(() => {});
     await new Promise(r => setTimeout(r, 1500));
 
     let { currentUrl: urlAfterNav, html } = await safeGetPageData(page);
@@ -162,14 +164,14 @@ export async function checkKrsWithPuppeteer(config) {
     // Jika setelah navigasi krs malah terlempar ke SSO lagi, lakukan re-login sekali lagi
     if (currentUrl.includes('sso.uns.ac.id') || currentUrl.includes('saml/login')) {
       console.log('[AUTO-LOGIN] Sesi expired, melakukan login SSO ulang...');
-      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
+      await page.goto('https://siakad.uns.ac.id/saml/login', { waitUntil: 'domcontentloaded', timeout: 35000 }).catch(() => {});
       const userInput = await page.waitForSelector('input[name="username"]', { timeout: 8000 }).catch(() => null);
       if (userInput) {
         await page.type('input[name="username"]', config.ssoUsername);
         await page.type('input[name="password"]', config.ssoPassword);
         await page.click('button[type="submit"]').catch(() => {});
         await new Promise(r => setTimeout(r, 4000));
-        await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
+        await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 35000 }).catch(() => {});
         await new Promise(r => setTimeout(r, 1500));
         const res = await safeGetPageData(page);
         currentUrl = res.currentUrl;
@@ -187,7 +189,7 @@ export async function checkKrsWithPuppeteer(config) {
         await new Promise(r => setTimeout(r, 4000));
 
         if (!page.url().includes('input-krs/index')) {
-          await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
+          await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 35000 }).catch(() => {});
           await new Promise(r => setTimeout(r, 1500));
         }
 
@@ -249,12 +251,17 @@ export async function checkKrsWithPuppeteer(config) {
     };
 
   } catch (err) {
-    const isNavError = err.message.includes('Execution context was destroyed') || 
-                       err.message.includes('Target closed') || 
-                       err.message.includes('navigating');
+    const isNavOrTimeoutError = err.message.includes('Execution context was destroyed') || 
+                                err.message.includes('Target closed') || 
+                                err.message.includes('navigating') ||
+                                err.message.includes('Timed out') ||
+                                err.message.includes('timeout') ||
+                                err.message.includes('Timeout') ||
+                                err.message.includes('net::ERR') ||
+                                err.message.includes('ECONNRESET');
 
-    if (isNavError) {
-      console.log(`ℹ️ [PUPPETEER INFO] Navigasi/redirect Siakad sedang berlangsung (${err.message}). Menyiapkan browser untuk siklus berikutnya...`);
+    if (isNavOrTimeoutError) {
+      console.log(`ℹ️ [PUPPETEER INFO] Kendala navigasi/timeout Siakad (${err.message}). Menyiapkan browser untuk siklus berikutnya...`);
     } else {
       console.error(`❌ [PUPPETEER ERROR] ${err.message}`);
     }
@@ -265,7 +272,7 @@ export async function checkKrsWithPuppeteer(config) {
       pageInstance = null;
     }
 
-    return { success: false, silent: isNavError, reason: err.message };
+    return { success: false, silent: isNavOrTimeoutError, reason: err.message };
   } finally {
     isCheckRunning = false;
   }
