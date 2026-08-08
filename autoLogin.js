@@ -40,6 +40,29 @@ let pageInstance = null;
 let isCheckRunning = false;
 
 /**
+ * Membaca URL dan HTML halaman secara aman dari event 'Execution context was destroyed'
+ */
+async function safeGetPageData(page) {
+  let retries = 0;
+  while (retries < 3) {
+    try {
+      const currentUrl = page.url();
+      const html = await page.content();
+      return { currentUrl, html };
+    } catch (err) {
+      if (err.message.includes('Execution context was destroyed') || err.message.includes('navigating')) {
+        retries++;
+        console.log(`[PUPPETEER] Navigasi Siakad sedang berlangsung, menunggu halaman settle (${retries}/3)...`);
+        await new Promise(r => setTimeout(r, 2000));
+      } else {
+        throw err;
+      }
+    }
+  }
+  return { currentUrl: page.url(), html: await page.content() };
+}
+
+/**
  * Mendapatkan atau menginisialisasi single browser page instance yang ultra-ringan & cepat.
  */
 async function getOrInitPage(config) {
@@ -96,7 +119,7 @@ async function getOrInitPage(config) {
 
 /**
  * Melakukan pemeriksaan halaman KRS Siakad UNS menggunakan Chromium ultra-ringan.
- * Otomatis menangani SSO Login & PIN Bank secara efisien tanpa false alert & tanpa loop PIN.
+ * Menangani SSO Login, PIN Bank, serta error navigasi secara seamless tanpa crash/spam error.
  */
 export async function checkKrsWithPuppeteer(config) {
   if (isCheckRunning) {
@@ -107,7 +130,7 @@ export async function checkKrsWithPuppeteer(config) {
 
   try {
     const page = await getOrInitPage(config);
-    let currentUrl = page.url();
+    let { currentUrl } = await safeGetPageData(page);
 
     // 1. Cek jika memerlukan SSO Login
     const needsSso = currentUrl === 'about:blank' ||
@@ -133,8 +156,8 @@ export async function checkKrsWithPuppeteer(config) {
     await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
     await new Promise(r => setTimeout(r, 1500));
 
-    currentUrl = page.url();
-    let html = await page.content();
+    let { currentUrl: urlAfterNav, html } = await safeGetPageData(page);
+    currentUrl = urlAfterNav;
 
     // Jika setelah navigasi krs malah terlempar ke SSO lagi, lakukan re-login sekali lagi
     if (currentUrl.includes('sso.uns.ac.id') || currentUrl.includes('saml/login')) {
@@ -148,8 +171,9 @@ export async function checkKrsWithPuppeteer(config) {
         await new Promise(r => setTimeout(r, 4000));
         await page.goto('https://siakad.uns.ac.id/registrasi/input-krs/index', { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
         await new Promise(r => setTimeout(r, 1500));
-        currentUrl = page.url();
-        html = await page.content();
+        const res = await safeGetPageData(page);
+        currentUrl = res.currentUrl;
+        html = res.html;
       }
     }
 
@@ -167,8 +191,9 @@ export async function checkKrsWithPuppeteer(config) {
           await new Promise(r => setTimeout(r, 1500));
         }
 
-        currentUrl = page.url();
-        html = await page.content();
+        const res = await safeGetPageData(page);
+        currentUrl = res.currentUrl;
+        html = res.html;
       }
     }
 
@@ -224,13 +249,23 @@ export async function checkKrsWithPuppeteer(config) {
     };
 
   } catch (err) {
-    console.error(`❌ [PUPPETEER ERROR] ${err.message}`);
+    const isNavError = err.message.includes('Execution context was destroyed') || 
+                       err.message.includes('Target closed') || 
+                       err.message.includes('navigating');
+
+    if (isNavError) {
+      console.log(`ℹ️ [PUPPETEER INFO] Navigasi/redirect Siakad sedang berlangsung (${err.message}). Menyiapkan browser untuk siklus berikutnya...`);
+    } else {
+      console.error(`❌ [PUPPETEER ERROR] ${err.message}`);
+    }
+
     if (browserInstance) {
       try { await browserInstance.close(); } catch { /* ignore */ }
       browserInstance = null;
       pageInstance = null;
     }
-    return { success: false, reason: err.message };
+
+    return { success: false, silent: isNavError, reason: err.message };
   } finally {
     isCheckRunning = false;
   }

@@ -81,6 +81,10 @@ async function checkKrsStatus() {
   if (result.skipped) return;
 
   if (!result.success) {
+    if (result.silent) {
+      console.log(`[${timestamp}] ℹ️ Navigasi Siakad sedang berlangsung, bot akan melanjutkan pengecekan pada siklus berikutnya...`);
+      return;
+    }
     const now = Date.now();
     console.error(`[${timestamp}] ❌ Error Pengecekan Siakad: ${result.reason}`);
     if (now - lastErrorWaSentTime > ERROR_WA_COOL_DOWN_MS) {
